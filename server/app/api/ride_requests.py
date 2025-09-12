@@ -35,11 +35,21 @@ def request_ride(ride_request: RideRequest, db: Session = Depends(get_db)):
                 detail=f"User with ID {ride_request.user_id} not found"
             )
         
+        # Update rider's current location if coordinates are provided
+        if ride_request.pickup_lat is not None and ride_request.pickup_lng is not None:
+            user.latitude = ride_request.pickup_lat
+            user.longitude = ride_request.pickup_lng
+            db.commit()
+        
         # Create new ride record
         new_ride = Ride(
             rider_id=ride_request.user_id,
             start_location=ride_request.source_location,
             end_location=ride_request.dest_location,
+            start_lat=ride_request.pickup_lat,
+            start_lng=ride_request.pickup_lng,
+            end_lat=ride_request.dest_lat,
+            end_lng=ride_request.dest_lng,
             status="requested"
         )
         

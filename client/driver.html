@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uber FirstGear - Driver Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
         :root {
             --uber-black: #000000;
@@ -31,9 +32,9 @@
         
         .card {
             border: none;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
         }
         
         .btn-primary {
@@ -67,7 +68,7 @@
         #map {
             height: 400px;
             width: 100%;
-            border-radius: 8px;
+            border-radius: 12px;
         }
         
         .status-online {
@@ -83,6 +84,17 @@
             color: white;
             padding: 2rem 0;
             margin-top: 3rem;
+        }
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        .star-rating {
+            color: #FFD700;
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -135,18 +147,30 @@
             <div class="col-md-4">
                 <h2 class="mb-4">Driver Stats</h2>
                 <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">John Driver</h5>
-                        <p class="card-text">Driver ID: 2</p>
-                        <p class="card-text">Rating: ⭐⭐⭐⭐⭐ (4.9)</p>
-                        <p class="card-text">Today's Earnings: $78.50</p>
-                        <p class="card-text">Rides Completed: 147</p>
+                    <div class="card-body d-flex align-items-center">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar" class="avatar">
+                        <div>
+                            <h5 class="card-title mb-1">John Driver</h5>
+                            <div class="star-rating mb-1">
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star"></i>
+                                <i class="fa-solid fa-star-half-stroke"></i>
+                                <span class="ms-2">(4.9)</span>
+                            </div>
+                            <p class="card-text mb-1">Driver ID: 2</p>
+                            <p class="card-text mb-1">Today's Earnings: <b>$78.50</b></p>
+                            <p class="card-text mb-0">Rides Completed: <b>147</b></p>
+                        </div>
                     </div>
                 </div>
                 
                 <h2 class="mb-4">Your Location</h2>
                 <div id="map" class="mb-4">
-                    <img src="https://maps.googleapis.com/maps/api/staticmap?center=Brooklyn+Bridge,New+York,NY&zoom=13&size=400x400&key=YOUR_API_KEY" alt="Map" class="img-fluid w-100 h-100">
+                    <!-- Leaflet map will be loaded here -->
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
                 </div>
             </div>
         </div>
@@ -183,27 +207,61 @@
 
     <!-- Template for ride request card -->
     <template id="rideRequestTemplate">
-        <div class="card ride-request mb-3">
+        <div class="card ride-request mb-3 shadow-sm">
             <div class="card-body">
-                <h5 class="card-title">Ride Request #<span class="ride-id"></span></h5>
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fa-solid fa-location-dot fa-2x text-primary me-2"></i>
+                    <h5 class="card-title mb-0">Ride Request #<span class="ride-id"></span></h5>
+                    <span class="badge bg-success ms-2 badge-animated">New</span>
+                </div>
                 <div class="row">
                     <div class="col-md-8">
-                        <p class="card-text"><strong>From:</strong> <span class="start-location"></span></p>
-                        <p class="card-text"><strong>To:</strong> <span class="end-location"></span></p>
-                        <p class="card-text"><strong>Rider:</strong> <span class="rider-id"></span></p>
-                        <p class="card-text"><strong>Requested at:</strong> <span class="created-at"></span></p>
+                        <p class="card-text mb-1"><strong>From:</strong> <span class="start-location"></span></p>
+                        <p class="card-text mb-1"><strong>To:</strong> <span class="end-location"></span></p>
+                        <p class="card-text mb-1"><strong>Rider:</strong> <span class="rider-id"></span></p>
+                        <p class="card-text mb-1"><strong>Requested at:</strong> <span class="created-at"></span></p>
                     </div>
                     <div class="col-md-4 d-flex align-items-center">
                         <button class="btn btn-success w-100 accept-btn">Accept Ride</button>
                     </div>
                 </div>
             </div>
+    <div class="toast-container" id="toastContainer"></div>
         </div>
     </template>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Toast notification helper
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
+            toast.role = 'alert';
+            toast.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+        let map, pickupMarker, destMarker, driverMarker;
+    let ws, currentRideId = null;
+    let routeLine;
+        let pickupLatLng = null, destLatLng = null, driverLatLng = null;
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Leaflet map
+            map = L.map('map').setView([12.9716, 77.5946], 13); // Default to Bangalore
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+            // Get driver's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    driverLatLng = [position.coords.latitude, position.coords.longitude];
+                    if (driverMarker) map.removeLayer(driverMarker);
+                    driverMarker = L.marker(driverLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Your Location').openPopup();
+                    map.setView(driverLatLng, 15);
+                });
+            }
             const API_URL = 'http://localhost:8000/api';
             const DRIVER_ID = 2; // For demo purposes, using driver_id=2
             let pollingInterval;
@@ -285,48 +343,103 @@
                         },
                         body: JSON.stringify({ driver_id: DRIVER_ID })
                     });
-                    
                     if (response.ok) {
                         const rideData = await response.json();
-                        alert(`You have accepted ride #${rideId}!`);
+                        showToast(`You have accepted ride #${rideId}!`, 'success');
                         updateCurrentRide(rideData);
                         fetchRideRequests(); // Refresh the list
                     } else {
                         const errorText = await response.text();
-                        alert(`Failed to accept ride: ${errorText}`);
+                        showToast(`Failed to accept ride: ${errorText}`, 'danger');
                     }
                 } catch (error) {
                     console.error('Error accepting ride:', error);
-                    alert(`Error accepting ride: ${error.message}`);
+                    showToast(`Error accepting ride: ${error.message}`, 'danger');
                 }
             }
             
             // Update current ride display
             function updateCurrentRide(ride) {
+                // WebSocket live location sharing
+                if (ws) { ws.close(); ws = null; }
+                if (ride && ride.id) {
+                    currentRideId = ride.id;
+                    ws = new WebSocket(`ws://localhost:8000/ws/ride/${ride.id}/driver`);
+                    ws.onopen = function() {
+                        // Send location every 3 seconds
+                        ws.send(JSON.stringify({ latitude: driverLatLng ? driverLatLng[0] : null, longitude: driverLatLng ? driverLatLng[1] : null }));
+                        window.driverLocationInterval = setInterval(() => {
+                            if (navigator.geolocation) {
+                                navigator.geolocation.getCurrentPosition(function(position) {
+                                    driverLatLng = [position.coords.latitude, position.coords.longitude];
+                                    ws.send(JSON.stringify({ latitude: driverLatLng[0], longitude: driverLatLng[1] }));
+                                    // Animate marker on driver map
+                                    if (driverMarker) {
+                                        driverMarker.setLatLng(driverLatLng);
+                                    } else {
+                                        driverMarker = L.marker(driverLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Your Location').openPopup();
+                                    }
+                                });
+                            }
+                        }, 3000);
+                    };
+                } else {
+                    if (window.driverLocationInterval) clearInterval(window.driverLocationInterval);
+                    if (ws) { ws.close(); ws = null; }
+                }
                 const container = document.getElementById('currentRide');
-                
                 if (!ride) {
                     container.innerHTML = `
                         <div class="card-body">
                             <p class="text-muted">No active ride</p>
                         </div>
                     `;
+                    // Remove pins from map
+                    if (pickupMarker) map.removeLayer(pickupMarker);
+                    if (destMarker) map.removeLayer(destMarker);
                     return;
                 }
-                
                 container.innerHTML = `
                     <div class="card-body">
                         <h5 class="card-title">Current Ride #${ride.id}</h5>
-                        <p class="card-text"><strong>From:</strong> ${ride.start_location}</p>
-                        <p class="card-text"><strong>To:</strong> ${ride.end_location}</p>
-                        <p class="card-text"><strong>Rider:</strong> User #${ride.rider_id}</p>
-                        <p class="card-text"><strong>Status:</strong> ${ride.status}</p>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-primary" id="completeRideBtn">Complete Ride</button>
+                        <div class="row">
+                            <div class="col-md-7">
+                                <p class="card-text"><strong>From:</strong> ${ride.start_location}</p>
+                                <p class="card-text"><strong>To:</strong> ${ride.end_location}</p>
+                                <p class="card-text"><strong>Rider:</strong> ${ride.rider ? ride.rider.username : 'User #'+ride.rider_id}</p>
+                                ${ride.rider ? `
+                                <p class="card-text"><strong>Rider Rating:</strong> ${ride.rider.rating || 'N/A'}</p>
+                                <p class="card-text"><strong>Rider Location:</strong> ${ride.rider.latitude && ride.rider.longitude ? `${ride.rider.latitude.toFixed(5)}, ${ride.rider.longitude.toFixed(5)}` : 'Not available'}</p>
+                                ` : ''}
+                                <p class="card-text"><strong>Status:</strong> <span class="badge bg-info">${ride.status}</span></p>
+                            </div>
+                            <div class="col-md-5 text-end">
+                                <button class="btn btn-primary" id="completeRideBtn">Complete Ride</button>
+                            </div>
                         </div>
                     </div>
                 `;
-                
+                // Add pickup and destination pins to map
+                if (pickupMarker) map.removeLayer(pickupMarker);
+                if (destMarker) map.removeLayer(destMarker);
+                if (routeLine) map.removeLayer(routeLine);
+                if (ride.start_lat && ride.start_lng) {
+                    pickupLatLng = [ride.start_lat, ride.start_lng];
+                    pickupMarker = L.marker(pickupLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Pickup Location').openPopup();
+                }
+                if (ride.end_lat && ride.end_lng) {
+                    destLatLng = [ride.end_lat, ride.end_lng];
+                    destMarker = L.marker(destLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Destination').openPopup();
+                }
+                // Draw route polyline
+                if (pickupLatLng && destLatLng) {
+                    routeLine = L.polyline([pickupLatLng, destLatLng], {color: 'purple', weight: 5, opacity: 0.7, dashArray: '10,10'}).addTo(map);
+                    map.fitBounds([pickupLatLng, destLatLng]);
+                } else if (pickupLatLng) {
+                    map.setView(pickupLatLng, 15);
+                } else if (destLatLng) {
+                    map.setView(destLatLng, 15);
+                }
                 // Add complete ride handler
                 document.getElementById('completeRideBtn').addEventListener('click', () => completeRide(ride.id));
             }
@@ -344,17 +457,16 @@
                         },
                         body: JSON.stringify({ fare: parseFloat(fare) })
                     });
-                    
                     if (response.ok) {
-                        alert(`Ride #${rideId} completed! Fare: $${fare}`);
+                        showToast(`Ride #${rideId} completed! Fare: $${fare}`, 'success');
                         updateCurrentRide(null); // Clear current ride
                     } else {
                         const errorText = await response.text();
-                        alert(`Failed to complete ride: ${errorText}`);
+                        showToast(`Failed to complete ride: ${errorText}`, 'danger');
                     }
                 } catch (error) {
                     console.error('Error completing ride:', error);
-                    alert(`Error completing ride: ${error.message}`);
+                    showToast(`Error completing ride: ${error.message}`, 'danger');
                 }
             }
             

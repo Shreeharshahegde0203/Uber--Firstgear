@@ -13,7 +13,10 @@ class User(Base):
     hashed_password = Column(String)
     is_driver = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    vehicle = Column(String, nullable=True)
+    rating = Column(Float, nullable=True)
     # Relationships
     rides_as_rider = relationship("Ride", foreign_keys="Ride.rider_id", back_populates="rider")
     rides_as_driver = relationship("Ride", foreign_keys="Ride.driver_id", back_populates="driver")
@@ -26,12 +29,15 @@ class Ride(Base):
     rider_id = Column(Integer, ForeignKey("users.id"))
     driver_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     start_location = Column(String)
+    start_lat = Column(Float, nullable=True)
+    start_lng = Column(Float, nullable=True)
     end_location = Column(String)
+    end_lat = Column(Float, nullable=True)
+    end_lng = Column(Float, nullable=True)
     status = Column(String, default="requested")  # requested, accepted, in_progress, completed, cancelled
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
     fare = Column(Float, nullable=True)
-    
     # Relationships
     rider = relationship("User", foreign_keys=[rider_id], back_populates="rides_as_rider")
     driver = relationship("User", foreign_keys=[driver_id], back_populates="rides_as_driver")

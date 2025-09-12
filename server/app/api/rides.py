@@ -43,6 +43,12 @@ def get_ride(ride_id: int, db: Session = Depends(get_db)):
             detail="Ride not found"
         )
     
+    # Attach rider and driver information for mutual visibility
+    rider = db.query(User).filter(User.id == db_ride.rider_id).first()
+    driver = db.query(User).filter(User.id == db_ride.driver_id).first() if db_ride.driver_id else None
+    db_ride.rider = rider
+    db_ride.driver = driver
+    
     return db_ride
 
 @router.put("/{ride_id}/accept", response_model=RideResponse)
@@ -83,7 +89,11 @@ def accept_ride(ride_id: int, driver_data: dict, db: Session = Depends(get_db)):
     
     db.commit()
     db.refresh(db_ride)
-    
+    # Attach full rider and driver details for mutual visibility
+    rider = db.query(User).filter(User.id == db_ride.rider_id).first()
+    driver = db.query(User).filter(User.id == db_ride.driver_id).first() if db_ride.driver_id else None
+    db_ride.rider = rider
+    db_ride.driver = driver
     return db_ride
 
 @router.put("/{ride_id}/complete", response_model=RideResponse)

@@ -14,7 +14,10 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
-    
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    vehicle: Optional[str] = None
+    rating: Optional[float] = None
     class Config:
         orm_mode = True
 
@@ -36,11 +39,16 @@ class RideResponse(BaseModel):
     driver_id: Optional[int] = None
     start_location: str
     end_location: str
+    start_lat: Optional[float] = None
+    start_lng: Optional[float] = None
+    end_lat: Optional[float] = None
+    end_lng: Optional[float] = None
     status: str
     created_at: datetime
     completed_at: Optional[datetime] = None
     fare: Optional[float] = None
-    
+    rider: Optional[UserResponse] = None
+    driver: Optional[UserResponse] = None
     class Config:
         orm_mode = True
 

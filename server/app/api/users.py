@@ -49,3 +49,23 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
         )
     
     return db_user
+
+@router.put("/{user_id}/location", response_model=UserResponse)
+def update_user_location(user_id: int, location_data: dict, db: Session = Depends(get_db)):
+    """Update a user's current location (latitude and longitude)"""
+    db_user = db.query(User).filter(User.id == user_id).first()
+    
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update location
+    db_user.latitude = location_data.get("latitude")
+    db_user.longitude = location_data.get("longitude")
+    
+    db.commit()
+    db.refresh(db_user)
+    
+    return db_user

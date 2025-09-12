@@ -144,9 +144,17 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <form id="rideForm">
+                            <div id="driverInfoCard" style="display:none;"></div>
                             <div class="mb-3">
                                 <label for="pickup" class="form-label">Pickup Location</label>
-                                <input type="text" class="form-control" id="pickup" placeholder="Enter pickup location">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="pickup" placeholder="Enter pickup location" readonly>
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="pickupDropdown" data-bs-toggle="dropdown" aria-expanded="false">Choose</button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" id="useCurrentLocation">Use current location</a></li>
+                                        <li><a class="dropdown-item" href="#" id="enterManually">Enter place name manually</a></li>
+                                    </ul>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="destination" class="form-label">Destination</label>
@@ -160,8 +168,79 @@
             <div class="col-md-6">
                 <h2 class="mb-4">Your Location</h2>
                 <div id="map" class="mb-4">
-                    <!-- Map will be loaded here -->
-                    <img src="https://maps.googleapis.com/maps/api/staticmap?center=Brooklyn+Bridge,New+York,NY&zoom=13&size=600x300&key=YOUR_API_KEY" alt="Map" class="img-fluid w-100 h-100">
+                    <!-- Leaflet map will be loaded here -->
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                    <script>
+                    let map, pickupMarker, destMarker;
+    let routeLine;
+                    let pickupLatLng = null, destLatLng = null;
+                    document.addEventListener('DOMContentLoaded', function() {
+                        map = L.map('map').setView([40.7128, -74.0060], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            maxZoom: 19,
+                            attribution: '© OpenStreetMap'
+                        }).addTo(map);
+                    });
+                    // Dropdown logic
+                    document.addEventListener('DOMContentLoaded', function() {
+                        document.getElementById('useCurrentLocation').onclick = function(e) {
+                            e.preventDefault();
+                            if (navigator.geolocation) {
+                                navigator.geolocation.getCurrentPosition(function(position) {
+                                    pickupLatLng = [position.coords.latitude, position.coords.longitude];
+                                    document.getElementById('pickup').value = 'Current Location';
+                                    if (pickupMarker) map.removeLayer(pickupMarker);
+                                    pickupMarker = L.marker(pickupLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Pickup Location').openPopup();
+                                    map.setView(pickupLatLng, 15);
+                                });
+                            }
+                        };
+                        document.getElementById('enterManually').onclick = function(e) {
+                            e.preventDefault();
+                            document.getElementById('pickup').removeAttribute('readonly');
+                            document.getElementById('pickup').value = '';
+                        };
+                        document.getElementById('pickup').onblur = async function() {
+                            if (this.value && this.value !== 'Current Location') {
+                                // Geocode address
+                                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.value)}`);
+                                const data = await resp.json();
+                                if (data && data[0]) {
+                                    pickupLatLng = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                                    if (pickupMarker) map.removeLayer(pickupMarker);
+                                    pickupMarker = L.marker(pickupLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Pickup Location').openPopup();
+                                    if (routeLine) map.removeLayer(routeLine);
+                                    if (pickupLatLng && destLatLng) {
+                                        routeLine = L.polyline([pickupLatLng, destLatLng], {color: 'purple', weight: 5, opacity: 0.7, dashArray: '10,10'}).addTo(map);
+                                        map.fitBounds([pickupLatLng, destLatLng]);
+                                    } else {
+                                        map.setView(pickupLatLng, 15);
+                                    }
+                                }
+                            }
+                        };
+                        document.getElementById('destination').onblur = async function() {
+                            if (this.value) {
+                                // Geocode address
+                                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.value)}`);
+                                const data = await resp.json();
+                                if (data && data[0]) {
+                                    destLatLng = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+                                    if (destMarker) map.removeLayer(destMarker);
+                                    destMarker = L.marker(destLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Destination').openPopup();
+                                    if (routeLine) map.removeLayer(routeLine);
+                                    if (pickupLatLng && destLatLng) {
+                                        routeLine = L.polyline([pickupLatLng, destLatLng], {color: 'purple', weight: 5, opacity: 0.7, dashArray: '10,10'}).addTo(map);
+                                        map.fitBounds([pickupLatLng, destLatLng]);
+                                    } else {
+                                        map.setView(destLatLng, 15);
+                                    }
+                                }
+                            }
+                        };
+                    });
+                    </script>
                 </div>
             </div>
         </div>
@@ -255,13 +334,10 @@
         // Ride Form
         document.getElementById('rideForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
             const pickup = document.getElementById('pickup').value;
             const destination = document.getElementById('destination').value;
-            
             // For demo purposes, using user_id=1. In a real app, this would come from authentication
             const userId = 1;
-            
             try {
                 const response = await fetch('http://localhost:8000/api/ride/request', {
                     method: 'POST',
@@ -271,13 +347,106 @@
                     body: JSON.stringify({ 
                         source_location: pickup,
                         dest_location: destination,
-                        user_id: userId
+                        user_id: userId,
+                        pickup_lat: pickupLatLng ? pickupLatLng[0] : null,
+                        pickup_lng: pickupLatLng ? pickupLatLng[1] : null,
+                        dest_lat: destLatLng ? destLatLng[0] : null,
+                        dest_lng: destLatLng ? destLatLng[1] : null
                     })
                 });
-                
                 if (response.ok) {
                     const data = await response.json();
                     alert(`Ride request submitted successfully! Ride ID: ${data.id}`);
+                    // Poll for driver acceptance (simulate real-time for demo)
+                    let pollInterval = setInterval(async () => {
+                        const rideResp = await fetch(`http://localhost:8000/api/rides/${data.id}`);
+                        if (rideResp.ok) {
+                            const rideData = await rideResp.json();
+                            if (rideData.driver) {
+                                clearInterval(pollInterval);
+                                // Show driver info card
+                                let driverInfo = `<div class='alert alert-success mt-3'><h5>Driver Details</h5>`;
+                                driverInfo += `<b>Name:</b> ${rideData.driver.username}<br>`;
+                                driverInfo += `<b>Vehicle:</b> ${rideData.driver.vehicle}<br>`;
+                                driverInfo += `<b>Rating:</b> ${rideData.driver.rating || 'N/A'}<br>`;
+                                driverInfo += `</div>`;
+                                document.getElementById('driverInfoCard').innerHTML = driverInfo;
+                                document.getElementById('driverInfoCard').style.display = 'block';
+                                // Add driver marker to map
+                                if (rideData.driver.latitude && rideData.driver.longitude) {
+                                    if (window.driverMarker) map.removeLayer(window.driverMarker);
+                                    window.driverMarker = L.marker([rideData.driver.latitude, rideData.driver.longitude], {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Driver Location').openPopup();
+                                }
+                                // Start WebSocket for live location updates
+                                window.driverWS = new WebSocket(`ws://localhost:8000/ws/ride/${data.id}/rider`);
+                                window.driverWS.onmessage = function(event) {
+                                    const loc = JSON.parse(event.data);
+                                    if (window.driverMarker) {
+                                        window.driverMarker.setLatLng([loc.latitude, loc.longitude]);
+                                    } else {
+                                        window.driverMarker = L.marker([loc.latitude, loc.longitude], {
+                                            icon: L.icon({
+                                                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png', 
+                                                iconSize: [25, 41], 
+                                                iconAnchor: [12, 41]
+                                            })
+                                        }).addTo(map).bindPopup('Driver Location').openPopup();
+                                    }
+                                };
+                                
+                                // Periodically send rider's location to server
+                                window.riderLocationInterval = setInterval(() => {
+                                    if (navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition(function(position) {
+                                            const lat = position.coords.latitude;
+                                            const lng = position.coords.longitude;
+                                            
+                                            // Update user record with current location
+                                            fetch(`http://localhost:8000/api/users/${userId}/location`, {
+                                                method: 'PUT',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({
+                                                    latitude: lat,
+                                                    longitude: lng
+                                                })
+                                            });
+                                            
+                                            // Also send via WebSocket if connected
+                                            if (window.driverWS && window.driverWS.readyState === WebSocket.OPEN) {
+                                                window.driverWS.send(JSON.stringify({
+                                                    latitude: lat,
+                                                    longitude: lng
+                                                }));
+                                            }
+                                        });
+                                    }
+                                }, 5000);
+                                
+                                // Listen for ride completion (polling for demo)
+                                let completeInterval = setInterval(async () => {
+                                    const rideResp2 = await fetch(`http://localhost:8000/api/rides/${data.id}`);
+                                    if (rideResp2.ok) {
+                                        const rideData2 = await rideResp2.json();
+                                        if (rideData2.status === 'completed') {
+                                            clearInterval(completeInterval);
+                                            document.getElementById('driverInfoCard').style.display = 'none';
+                                            if (window.driverMarker) map.removeLayer(window.driverMarker);
+                                            if (window.driverWS) { window.driverWS.close(); window.driverWS = null; }
+                                            if (window.riderLocationInterval) { clearInterval(window.riderLocationInterval); window.riderLocationInterval = null; }
+                                            // Reset UI (clear form, pins)
+                                            document.getElementById('rideForm').reset();
+                                            if (pickupMarker) map.removeLayer(pickupMarker);
+                                            if (destMarker) map.removeLayer(destMarker);
+                                            pickupLatLng = null; destLatLng = null;
+                                            alert('Ride completed! Ready for next request.');
+                                        }
+                                    }
+                                }, 3000);
+                            }
+                        }
+                    }, 3000);
                 } else {
                     const errorData = await response.text();
                     alert(`Error: ${errorData}`);
