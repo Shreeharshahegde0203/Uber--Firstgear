@@ -12,6 +12,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_driver = Column(Boolean, default=False)
+    availability = Column(Boolean, default=True)  # For drivers: online/offline status
     created_at = Column(DateTime, default=datetime.utcnow)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
@@ -34,10 +35,28 @@ class Ride(Base):
     end_location = Column(String)
     end_lat = Column(Float, nullable=True)
     end_lng = Column(Float, nullable=True)
-    status = Column(String, default="requested")  # requested, accepted, in_progress, completed, cancelled
-    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Enhanced status system for offer flow
+    # Possible values: requested, offering, accepted, declined, expired, in_progress, completed, cancelled
+    status = Column(String, default="requested", index=True)
+    
+    # Offer tracking fields
+    offered_to_driver_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Current driver being offered
+    offered_at = Column(DateTime, nullable=True)  # When offer was made
+    expires_at = Column(DateTime, nullable=True)  # When offer expires (20 sec from offered_at)
+    offer_attempts = Column(Integer, default=0)  # Number of drivers offered to
+    declined_driver_ids = Column(String, nullable=True)  # Comma-separated list of driver IDs who declined
+    
+    # NEW: One-offer-per-driver tracking
+    current_offer_driver_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Driver currently viewing offer
+    offer_expires_at = Column(DateTime, nullable=True)  # When current offer expires (for queue management)
+    cancellation_reason = Column(String(100), nullable=True)  # Why ride was cancelled
+    
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
     completed_at = Column(DateTime, nullable=True)
+    cancelled_at = Column(DateTime, nullable=True)
     fare = Column(Float, nullable=True)
+    
     # Relationships
     rider = relationship("User", foreign_keys=[rider_id], back_populates="rides_as_rider")
     driver = relationship("User", foreign_keys=[driver_id], back_populates="rides_as_driver")

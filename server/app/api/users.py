@@ -69,3 +69,22 @@ def update_user_location(user_id: int, location_data: dict, db: Session = Depend
     db.refresh(db_user)
     
     return db_user
+
+@router.put("/{user_id}/availability", response_model=UserResponse)
+def update_user_availability(user_id: int, availability_data: dict, db: Session = Depends(get_db)):
+    """Toggle driver availability (online/offline)"""
+    db_user = db.query(User).filter(User.id == user_id, User.is_driver == True).first()
+    
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Driver not found"
+        )
+    
+    # Update availability
+    db_user.availability = availability_data.get("availability", True)
+    
+    db.commit()
+    db.refresh(db_user)
+    
+    return db_user

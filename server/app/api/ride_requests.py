@@ -17,6 +17,14 @@ logger = logging.getLogger(__name__)
 def request_ride(ride_request: RideRequest, db: Session = Depends(get_db)):
     """
     Endpoint to handle ride requests.
+    Now triggers automatic driver matching via background worker.
+    
+    Edge cases handled:
+    - User not found
+    - Invalid coordinates
+    - Duplicate requests (rapid clicking)
+    - Database failures
+    - Rider has pending ride
     
     Parameters:
     - source_location: Starting point
@@ -27,7 +35,7 @@ def request_ride(ride_request: RideRequest, db: Session = Depends(get_db)):
     - Ride details including ID and status
     """
     try:
-        # Check if user exists
+        # 1. Validate user exists and is not a driver
         user = db.query(User).filter(User.id == ride_request.user_id).first()
         if not user:
             raise HTTPException(
@@ -35,13 +43,49 @@ def request_ride(ride_request: RideRequest, db: Session = Depends(get_db)):
                 detail=f"User with ID {ride_request.user_id} not found"
             )
         
-        # Update rider's current location if coordinates are provided
-        if ride_request.pickup_lat is not None and ride_request.pickup_lng is not None:
-            user.latitude = ride_request.pickup_lat
-            user.longitude = ride_request.pickup_lng
-            db.commit()
+        if user.is_driver:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Drivers cannot request rides"
+            )
         
-        # Create new ride record
+        # 2. Check for existing pending rides (prevent duplicate requests)
+        existing_ride = db.query(Ride).filter(
+            Ride.rider_id == ride_request.user_id,
+            Ride.status.in_(["requested", "offering", "accepted"])
+        ).first()
+        
+        if existing_ride:
+            logger.warning(f"User #{ride_request.user_id} already has pending ride #{existing_ride.id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"You already have a pending ride (ID: {existing_ride.id})"
+            )
+        
+        # 3. Validate coordinates
+        if ride_request.pickup_lat is None or ride_request.pickup_lng is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Pickup coordinates are required"
+            )
+        
+        if not (-90 <= ride_request.pickup_lat <= 90):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid pickup latitude (must be between -90 and 90)"
+            )
+        
+        if not (-180 <= ride_request.pickup_lng <= 180):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid pickup longitude (must be between -180 and 180)"
+            )
+        
+        # 4. Update rider's current location
+        user.latitude = ride_request.pickup_lat
+        user.longitude = ride_request.pickup_lng
+        
+        # 5. Create new ride record
         new_ride = Ride(
             rider_id=ride_request.user_id,
             start_location=ride_request.source_location,
@@ -50,25 +94,28 @@ def request_ride(ride_request: RideRequest, db: Session = Depends(get_db)):
             start_lng=ride_request.pickup_lng,
             end_lat=ride_request.dest_lat,
             end_lng=ride_request.dest_lng,
-            status="requested"
+            status="requested"  # Background worker will pick this up
         )
         
-        # Store in PostgreSQL
+        # 6. Store in database
         db.add(new_ride)
         db.commit()
         db.refresh(new_ride)
         
-        logger.info(f"Ride request stored in database: ID={new_ride.id}, From={ride_request.source_location}, To={ride_request.dest_location}")
+        logger.info(f"✅ Ride #{new_ride.id} created: {ride_request.source_location} → {ride_request.dest_location} (rider #{ride_request.user_id})")
         
         return new_ride
         
-    except Exception as e:
-        # If database operations fail, log the attempt
-        logger.error(f"Failed to store ride in database: {str(e)}")
-        logger.info(f"We will store this data in Postgres now: From={ride_request.source_location}, To={ride_request.dest_location}, User ID={ride_request.user_id}")
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
         
-        # Return a mock response
+    except Exception as e:
+        # Log unexpected errors
+        logger.error(f"❌ Unexpected error creating ride: {e}", exc_info=True)
+        db.rollback()
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Database error: {str(e)}"
+            detail=f"Server error: {str(e)}"
         )

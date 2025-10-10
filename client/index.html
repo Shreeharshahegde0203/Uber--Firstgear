@@ -121,7 +121,13 @@
                         <a class="nav-link" href="#">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link btn btn-secondary ms-lg-3" href="#">Sign Up</a>
+                        <a class="nav-link btn btn-secondary ms-lg-3" href="login.html" id="authLink">Login</a>
+                    </li>
+                    <li class="nav-item" id="userInfo" style="display:none;">
+                        <span class="nav-link text-white" id="userName"></span>
+                    </li>
+                    <li class="nav-item" id="logoutBtn" style="display:none;">
+                        <a class="nav-link btn btn-danger ms-lg-3" href="#" onclick="logout()">Logout</a>
                     </li>
                 </ul>
             </div>
@@ -187,9 +193,11 @@
                         document.getElementById('useCurrentLocation').onclick = function(e) {
                             e.preventDefault();
                             if (navigator.geolocation) {
-                                navigator.geolocation.getCurrentPosition(function(position) {
+                                navigator.geolocation.getCurrentPosition(async function(position) {
                                     pickupLatLng = [position.coords.latitude, position.coords.longitude];
-                                    document.getElementById('pickup').value = 'Current Location';
+                                    // Reverse geocode to get address
+                                    const address = await reverseGeocode(pickupLatLng[0], pickupLatLng[1]);
+                                    document.getElementById('pickup').value = address;
                                     if (pickupMarker) map.removeLayer(pickupMarker);
                                     pickupMarker = L.marker(pickupLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Pickup Location').openPopup();
                                     map.setView(pickupLatLng, 15);
@@ -310,6 +318,127 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Check authentication
+        let currentUser = null;
+        let notificationWs = null;
+        
+        if (localStorage.getItem('user')) {
+            currentUser = JSON.parse(localStorage.getItem('user'));
+            if (currentUser.is_driver) {
+                alert('You are logged in as a driver. Redirecting to driver dashboard...');
+                window.location.href = 'driver.html';
+            } else {
+                // Show user info
+                document.getElementById('authLink').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+                document.getElementById('userName').textContent = `👤 ${currentUser.username}`;
+                
+                // Connect to notification WebSocket for rider
+                connectNotificationWebSocket();
+            }
+        } else {
+            // Redirect to login
+            if (!window.location.href.includes('login.html')) {
+                alert('Please login to continue');
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // WebSocket for ride notifications (cancellation, acceptance)
+        function connectNotificationWebSocket() {
+            if (!currentUser) return;
+            
+            const wsUrl = `ws://localhost:8000/ws/notifications/${currentUser.id}`;
+            console.log(`🔌 [Rider #${currentUser.id}] Connecting to notification WebSocket:`, wsUrl);
+            
+            notificationWs = new WebSocket(wsUrl);
+            
+            notificationWs.onopen = () => {
+                console.log(`✅ [Rider #${currentUser.id}] Notification WebSocket connected`);
+            };
+            
+            notificationWs.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log(`📨 [Rider #${currentUser.id}] Received notification:`, data);
+                
+                if (data.type === 'ride_cancelled') {
+                    // Show cancellation alert
+                    showCancellationAlert(data.message || 'No drivers available. Please try again.');
+                } else if (data.type === 'driver_assigned' || data.type === 'ride_accepted') {
+                    // Show driver details
+                    showDriverAssigned(data);
+                }
+            };
+            
+            notificationWs.onerror = (error) => {
+                console.error(`❌ [Rider #${currentUser.id}] WebSocket error:`, error);
+            };
+            
+            notificationWs.onclose = () => {
+                console.log(`🔌 [Rider #${currentUser.id}] WebSocket closed, reconnecting in 5s...`);
+                setTimeout(connectNotificationWebSocket, 5000);
+            };
+        }
+        
+        // Show cancellation alert with Try Again button
+        function showCancellationAlert(message) {
+            const alertHtml = `
+                <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+                    <h5 class="alert-heading">⚠️ Ride Cancelled</h5>
+                    <p>${message}</p>
+                    <hr>
+                    <button type="button" class="btn btn-warning" onclick="location.reload()">
+                        🔄 Try Again
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            const container = document.querySelector('.container');
+            if (container) {
+                container.insertAdjacentHTML('afterbegin', alertHtml);
+            }
+        }
+        
+        // Show driver assigned notification
+        function showDriverAssigned(data) {
+            const driverInfo = `
+                <div class='alert alert-success mt-3'>
+                    <h5>✅ Driver Assigned!</h5>
+                    <b>Name:</b> ${data.driver_name || 'N/A'}<br>
+                    <b>Vehicle:</b> ${data.driver_vehicle || 'N/A'}<br>
+                    <b>Rating:</b> ${data.driver_rating || 'N/A'}<br>
+                </div>
+            `;
+            const driverInfoCard = document.getElementById('driverInfoCard');
+            if (driverInfoCard) {
+                driverInfoCard.innerHTML = driverInfo;
+                driverInfoCard.style.display = 'block';
+            }
+        }
+        
+        function logout() {
+            if (notificationWs) {
+                notificationWs.close();
+                notificationWs = null;
+            }
+            localStorage.removeItem('user');
+            alert('Logged out successfully');
+            window.location.href = 'login.html';
+        }
+        
+        // Reverse geocoding function
+        async function reverseGeocode(lat, lng) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await response.json();
+                return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            } catch (error) {
+                console.error('Reverse geocoding failed:', error);
+                return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+        }
+        
         // API Test
         document.getElementById('pingButton').addEventListener('click', async function() {
             const apiResponse = document.getElementById('apiResponse');
@@ -332,12 +461,22 @@
         });
         
         // Ride Form
+        let activePolling = null;
+        let activeCompletePolling = null;
+        
         document.getElementById('rideForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            if (!currentUser) {
+                alert('Please login to request a ride');
+                window.location.href = 'login.html';
+                return;
+            }
+            
             const pickup = document.getElementById('pickup').value;
             const destination = document.getElementById('destination').value;
-            // For demo purposes, using user_id=1. In a real app, this would come from authentication
-            const userId = 1;
+            const userId = currentUser.id;  // Use logged-in user's ID
+            
             try {
                 const response = await fetch('http://localhost:8000/api/ride/request', {
                     method: 'POST',
@@ -357,13 +496,19 @@
                 if (response.ok) {
                     const data = await response.json();
                     alert(`Ride request submitted successfully! Ride ID: ${data.id}`);
+                    
+                    // Clear any existing polling
+                    if (activePolling) clearInterval(activePolling);
+                    if (activeCompletePolling) clearInterval(activeCompletePolling);
+                    
                     // Poll for driver acceptance (simulate real-time for demo)
-                    let pollInterval = setInterval(async () => {
+                    activePolling = setInterval(async () => {
                         const rideResp = await fetch(`http://localhost:8000/api/rides/${data.id}`);
                         if (rideResp.ok) {
                             const rideData = await rideResp.json();
                             if (rideData.driver) {
-                                clearInterval(pollInterval);
+                                clearInterval(activePolling);
+                                activePolling = null;
                                 // Show driver info card
                                 let driverInfo = `<div class='alert alert-success mt-3'><h5>Driver Details</h5>`;
                                 driverInfo += `<b>Name:</b> ${rideData.driver.username}<br>`;
@@ -425,12 +570,13 @@
                                 }, 5000);
                                 
                                 // Listen for ride completion (polling for demo)
-                                let completeInterval = setInterval(async () => {
+                                activeCompletePolling = setInterval(async () => {
                                     const rideResp2 = await fetch(`http://localhost:8000/api/rides/${data.id}`);
                                     if (rideResp2.ok) {
                                         const rideData2 = await rideResp2.json();
                                         if (rideData2.status === 'completed') {
-                                            clearInterval(completeInterval);
+                                            clearInterval(activeCompletePolling);
+                                            activeCompletePolling = null;
                                             document.getElementById('driverInfoCard').style.display = 'none';
                                             if (window.driverMarker) map.removeLayer(window.driverMarker);
                                             if (window.driverWS) { window.driverWS.close(); window.driverWS = null; }
@@ -454,6 +600,14 @@
             } catch (error) {
                 alert(`Failed to submit ride request: ${error.message}`);
             }
+        });
+        
+        // Cleanup polling on page unload
+        window.addEventListener('beforeunload', function() {
+            if (activePolling) clearInterval(activePolling);
+            if (activeCompletePolling) clearInterval(activeCompletePolling);
+            if (window.driverWS) window.driverWS.close();
+            if (window.riderLocationInterval) clearInterval(window.riderLocationInterval);
         });
     </script>
 </body>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Login - Uber FirstGear</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --uber-black: #000000;
+            --uber-white: #FFFFFF;
+            --uber-green: #06C167;
+        }
+        
+        body {
+            font-family: 'UberMove', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #06C167 0%, #05a057 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--uber-black);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .driver-badge {
+            background: var(--uber-green);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-success {
+            background-color: var(--uber-green);
+            border-color: var(--uber-green);
+            padding: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .btn-success:hover {
+            background-color: #05a057;
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--uber-black);
+            color: var(--uber-black);
+            padding: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--uber-black);
+            border-color: var(--uber-black);
+        }
+        
+        .form-control {
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tab-buttons .btn {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo-text">🚗 Uber FirstGear</div>
+        <div class="text-center">
+            <span class="driver-badge">Driver Portal</span>
+        </div>
+        
+        <div class="tab-buttons">
+            <button class="btn btn-success" id="loginTab">Login</button>
+            <button class="btn btn-outline-secondary" id="registerTab">Register</button>
+        </div>
+        
+        <!-- Login Form -->
+        <form id="loginForm" style="display: block;">
+            <h3 class="mb-4">Welcome Back, Driver</h3>
+            <div class="mb-3">
+                <label for="loginEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="loginEmail" required>
+            </div>
+            <div class="mb-3">
+                <label for="loginPassword" class="form-label">Password</label>
+                <input type="password" class="form-control" id="loginPassword" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Login as Driver</button>
+            <div class="text-center mt-3">
+                <a href="login.html" class="text-muted">Login as Rider instead</a>
+            </div>
+        </form>
+        
+        <!-- Register Form -->
+        <form id="registerForm" style="display: none;">
+            <h3 class="mb-4">Become a Driver</h3>
+            <div class="mb-3">
+                <label for="registerUsername" class="form-label">Username</label>
+                <input type="text" class="form-control" id="registerUsername" required>
+            </div>
+            <div class="mb-3">
+                <label for="registerEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="registerEmail" required>
+            </div>
+            <div class="mb-3">
+                <label for="registerPassword" class="form-label">Password</label>
+                <input type="password" class="form-control" id="registerPassword" required>
+            </div>
+            <div class="mb-3">
+                <label for="registerVehicle" class="form-label">Vehicle Details</label>
+                <input type="text" class="form-control" id="registerVehicle" placeholder="e.g., Toyota Camry 2020" required>
+            </div>
+            <button type="submit" class="btn btn-outline-primary w-100">Register as Driver</button>
+            <div class="text-center mt-3">
+                <a href="login.html" class="text-muted">Register as Rider instead</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        
+        // Tab switching
+        document.getElementById('loginTab').addEventListener('click', function() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('btn-success');
+            document.getElementById('registerTab').classList.remove('btn-success');
+            document.getElementById('registerTab').classList.add('btn-outline-secondary');
+        });
+        
+        document.getElementById('registerTab').addEventListener('click', function() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('btn-success');
+            document.getElementById('loginTab').classList.remove('btn-success');
+            document.getElementById('loginTab').classList.add('btn-outline-secondary');
+        });
+        
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (!data.user.is_driver) {
+                        alert('This account is not registered as a driver. Please use rider login.');
+                        return;
+                    }
+                    // Store user data in localStorage
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    alert(`Welcome back, ${data.user.username}!`);
+                    window.location.href = 'driver.html';
+                } else {
+                    const error = await response.json();
+                    alert(`Login failed: ${error.detail}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+        
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const vehicle = document.getElementById('registerVehicle').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        username, 
+                        email, 
+                        password,
+                        vehicle,
+                        is_driver: true
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    // Store user data in localStorage
+                    localStorage.setItem('user', JSON.stringify(data));
+                    alert(`Driver account created successfully! Welcome, ${data.username}!`);
+                    window.location.href = 'driver.html';
+                } else {
+                    const error = await response.json();
+                    alert(`Registration failed: ${error.detail}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+        
+        // Check if already logged in
+        if (localStorage.getItem('user')) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user.is_driver) {
+                if (confirm(`You're already logged in as ${user.username}. Go to driver dashboard?`)) {
+                    window.location.href = 'driver.html';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
