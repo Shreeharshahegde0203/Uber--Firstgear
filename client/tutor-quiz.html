@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Quiz | Uber First Gear - Instructor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; min-height: 100vh; line-height: 1.6; }
+        
+        /* Navigation */
+        .nav { background: #000; border-bottom: 1px solid #1a1a1a; padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+        .nav-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 64px; }
+        .nav-brand { font-size: 20px; font-weight: 700; color: #fff; text-decoration: none; }
+        .nav-links { display: flex; gap: 24px; }
+        .nav-link { color: #888; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover, .nav-link.active { color: #fff; }
+
+        /* Main Content */
+        .main { max-width: 800px; margin: 0 auto; padding: 40px 24px; }
+        
+        .header-section { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; animation: fadeUp 0.5s ease; }
+        .page-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .page-subtitle { color: #888; font-size: 16px; }
+        
+        .coin-balance { background: #111; border: 1px solid #222; padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; }
+        .coin-icon { width: 24px; height: 24px; background: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; font-size: 14px; }
+        .coin-text { font-size: 14px; color: #888; }
+        .coin-amount { font-size: 18px; font-weight: 700; color: #fff; }
+
+        /* Quiz Card */
+        .quiz-card { background: #111; border: 1px solid #222; border-radius: 16px; padding: 40px; min-height: 400px; display: flex; flex-direction: column; animation: fadeUp 0.6s ease; }
+        
+        .quiz-progress { margin-bottom: 32px; }
+        .progress-bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.3s ease; }
+        .progress-text { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #666; }
+
+        .question-container { flex: 1; }
+        .question-text { font-size: 24px; font-weight: 600; margin-bottom: 32px; line-height: 1.4; }
+        
+        .options-grid { display: grid; gap: 16px; }
+        .option-btn { 
+            background: #0a0a0a; border: 1px solid #333; padding: 20px; border-radius: 12px; 
+            color: #fff; text-align: left; font-size: 16px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 16px;
+        }
+        .option-btn:hover:not(.locked) { border-color: #666; background: #1a1a1a; }
+        .option-btn.selected { border-color: #fff; background: #fff; color: #000; }
+        .option-btn.correct { border-color: #22c55e; background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .option-btn.incorrect { border-color: #ef4444; background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .option-btn.locked { pointer-events: none; }
+        .option-marker { 
+            width: 24px; height: 24px; border: 2px solid #444; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .option-btn.selected .option-marker { border-color: #000; }
+        .option-btn.selected .option-marker::after { content: ''; width: 10px; height: 10px; background: #000; border-radius: 50%; }
+        .option-btn.correct .option-marker { border-color: #22c55e; }
+        .option-btn.correct .option-marker::after { content: '✓'; font-size: 14px; font-weight: bold; }
+        .option-btn.incorrect .option-marker { border-color: #ef4444; }
+        .option-btn.incorrect .option-marker::after { content: '✗'; font-size: 14px; font-weight: bold; }
+
+        /* Explanation Box */
+        .explanation-box { 
+            margin-top: 24px; padding: 20px; background: #0a1628; border: 1px solid #1e3a5f; 
+            border-radius: 12px; animation: slideUp 0.3s ease; display: none;
+        }
+        .explanation-box.show { display: block; }
+        .explanation-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .explanation-icon { width: 28px; height: 28px; background: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .explanation-icon svg { width: 16px; height: 16px; stroke: #fff; }
+        .explanation-title { font-size: 14px; font-weight: 600; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; }
+        .explanation-text { color: #94a3b8; font-size: 15px; line-height: 1.7; }
+        
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .quiz-footer { margin-top: 40px; display: flex; justify-content: flex-end; }
+        .next-btn { 
+            background: #fff; color: #000; border: none; padding: 16px 40px; border-radius: 10px; 
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+        }
+        .next-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .next-btn:hover:not(:disabled) { opacity: 0.9; }
+
+        /* Result State */
+        .result-container { text-align: center; padding: 40px 0; display: none; animation: fadeUp 0.5s ease; }
+        .result-icon { width: 80px; height: 80px; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+        .result-icon svg { width: 40px; height: 40px; stroke: #fff; }
+        .result-title { font-size: 32px; font-weight: 700; margin-bottom: 16px; }
+        .result-score { font-size: 48px; font-weight: 800; color: #fff; margin-bottom: 24px; }
+        .result-message { color: #888; font-size: 18px; margin-bottom: 40px; }
+        .reward-box { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 24px; border-radius: 12px; display: inline-flex; align-items: center; gap: 16px; margin-bottom: 40px; }
+        .reward-amount { color: #f59e0b; font-weight: 700; font-size: 24px; }
+        
+        .home-btn { background: #fff; color: #000; text-decoration: none; padding: 16px 32px; border-radius: 10px; font-weight: 600; display: inline-block; }
+        .home-btn:hover { opacity: 0.9; }
+
+        /* Loading State */
+        .loading { text-align: center; padding: 80px 0; color: #666; }
+
+        /* Instructor Badge */
+        .instructor-badge { display: inline-flex; align-items: center; gap: 8px; background: #1a1a1a; padding: 6px 12px; border-radius: 20px; font-size: 12px; color: #888; margin-bottom: 12px; }
+        .badge-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="tutor-dashboard.html" class="nav-brand">Uber First Gear</a>
+            <div class="nav-links">
+                <a href="tutor-dashboard.html" class="nav-link">Dashboard</a>
+                <a href="tutor-available-lessons.html" class="nav-link">Available Lessons</a>
+                <a href="tutor-my-lessons.html" class="nav-link">My Lessons</a>
+                <a href="#" class="nav-link active">Daily Quiz</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="header-section">
+            <div>
+                <div class="instructor-badge">
+                    <span class="badge-dot"></span>
+                    <span>Instructor Mode</span>
+                </div>
+                <h1 class="page-title">Daily Driving Quiz</h1>
+                <p class="page-subtitle">Stay sharp and earn bonus coins</p>
+            </div>
+            <div class="coin-balance">
+                <div class="coin-icon">C</div>
+                <div>
+                    <div class="coin-text">Your Balance</div>
+                    <div class="coin-amount" id="headerBalance">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quizContainer" class="quiz-card" style="display: none;">
+            <div class="quiz-progress">
+                <div class="progress-bar"><div class="progress-fill" id="progressBar"></div></div>
+                <div class="progress-text">
+                    <span>Question <span id="currentQNum">1</span> of 5</span>
+                    <span>Daily Challenge</span>
+                </div>
+            </div>
+
+            <div class="question-container">
+                <h2 class="question-text" id="questionText">Loading question...</h2>
+                <div class="options-grid" id="optionsGrid">
+                    <!-- Options injected here -->
+                </div>
+                <div class="explanation-box" id="explanationBox">
+                    <div class="explanation-header">
+                        <div class="explanation-icon">
+                            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                            </svg>
+                        </div>
+                        <span class="explanation-title">Learn More</span>
+                    </div>
+                    <p class="explanation-text" id="explanationText"></p>
+                </div>
+            </div>
+
+            <div class="quiz-footer">
+                <button class="next-btn" id="nextBtn" disabled>Next Question</button>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="result-container">
+            <div class="result-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h2 class="result-title">Quiz Completed!</h2>
+            <div class="result-score" id="finalScore">4/5</div>
+            <p class="result-message" id="resultMessage">Great job! You've mastered today's topics.</p>
+            
+            <div class="reward-box" id="rewardBox" style="display: none;">
+                <div class="coin-icon">C</div>
+                <span class="reward-amount">+10 Coins Earned</span>
+            </div>
+
+            <div>
+                <a href="tutor-dashboard.html" class="home-btn">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div id="loadingState" class="loading">
+            Generating your daily quiz...
+        </div>
+        
+        <div id="errorState" class="loading" style="display: none; color: #ef4444;">
+            <p id="errorText">Failed to load quiz.</p>
+            <a href="tutor-dashboard.html" style="color: #fff; margin-top: 16px; display: inline-block;">Return to Dashboard</a>
+        </div>
+    </main>
+
+    <script src="config.js"></script>
+    <script>
+        const API_URL = window.CONFIG?.API_URL || 'http://localhost:8000';
+        let currentUser = JSON.parse(localStorage.getItem('user'));
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let answerChecked = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!currentUser) {
+                window.location.href = 'driver.html';
+                return;
+            }
+            await loadBalance();
+            await loadQuiz();
+        });
+
+        async function loadBalance() {
+            try {
+                const res = await fetch(`${API_URL}/api/quiz/balance/${currentUser.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('headerBalance').textContent = data.coins;
+                }
+            } catch (e) {
+                console.error('Failed to load balance', e);
+            }
+        }
+
+        async function loadQuiz() {
+            try {
+                const res = await fetch(`${API_URL}/api/quiz/daily/${currentUser.id}`);
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Failed to load quiz');
+                }
+                const data = await res.json();
+                currentQuestions = data.questions;
+                renderQuestion();
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('quizContainer').style.display = 'flex';
+            } catch (e) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                document.getElementById('errorText').textContent = e.message;
+            }
+        }
+
+        function renderQuestion() {
+            const q = currentQuestions[currentQuestionIndex];
+            document.getElementById('questionText').textContent = q.question;
+            document.getElementById('currentQNum').textContent = currentQuestionIndex + 1;
+            
+            const progress = ((currentQuestionIndex) / currentQuestions.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+            
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('div');
+                btn.className = 'option-btn';
+                btn.innerHTML = `
+                    <div class="option-marker"></div>
+                    <span>${opt}</span>
+                `;
+                btn.onclick = () => selectOption(idx);
+                grid.appendChild(btn);
+            });
+
+            // Reset state
+            answerChecked = false;
+            document.getElementById('explanationBox').classList.remove('show');
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('nextBtn').textContent = 
+                currentQuestionIndex === currentQuestions.length - 1 ? 'Submit Quiz' : 'Next Question';
+        }
+
+        async function selectOption(idx) {
+            if (answerChecked) return; // Already answered
+            
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.classList.remove('selected'));
+            buttons[idx].classList.add('selected');
+            
+            // Store answer
+            userAnswers[currentQuestionIndex] = idx;
+            
+            // Check answer and get explanation
+            await checkAnswer(idx);
+        }
+        
+        async function checkAnswer(selectedIdx) {
+            const q = currentQuestions[currentQuestionIndex];
+            
+            try {
+                const res = await fetch(`${API_URL}/api/quiz/check-answer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question_id: q.id,
+                        user_id: currentUser.id,
+                        selected_answer: selectedIdx
+                    })
+                });
+                
+                const data = await res.json();
+                const buttons = document.querySelectorAll('.option-btn');
+                
+                // Lock all options
+                buttons.forEach(b => b.classList.add('locked'));
+                
+                // Show correct/incorrect styling
+                if (data.is_correct) {
+                    buttons[selectedIdx].classList.remove('selected');
+                    buttons[selectedIdx].classList.add('correct');
+                } else {
+                    buttons[selectedIdx].classList.remove('selected');
+                    buttons[selectedIdx].classList.add('incorrect');
+                    // Show the correct answer
+                    buttons[data.correct_answer].classList.add('correct');
+                }
+                
+                // Show explanation
+                document.getElementById('explanationText').textContent = data.explanation;
+                document.getElementById('explanationBox').classList.add('show');
+                
+                answerChecked = true;
+                document.getElementById('nextBtn').disabled = false;
+                
+            } catch (e) {
+                console.error('Error checking answer', e);
+                // Still allow to proceed
+                document.getElementById('nextBtn').disabled = false;
+            }
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', async () => {
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                await submitQuiz();
+            }
+        });
+
+        async function submitQuiz() {
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('loadingState').textContent = 'Submitting results...';
+
+            try {
+                const res = await fetch(`${API_URL}/api/quiz/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        answers: userAnswers
+                    })
+                });
+
+                const result = await res.json();
+                
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('resultContainer').style.display = 'block';
+                
+                document.getElementById('finalScore').textContent = `${result.score}/${result.total}`;
+                document.getElementById('resultMessage').textContent = result.message;
+                document.getElementById('headerBalance').textContent = result.new_balance;
+
+                if (result.coins_earned > 0) {
+                    document.getElementById('rewardBox').style.display = 'inline-flex';
+                }
+            } catch (e) {
+                alert('Error submitting quiz');
+            }
+        }
+    </script>
+</body>
+</html>

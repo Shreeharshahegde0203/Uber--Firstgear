@@ -3,145 +3,434 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Login - Uber FirstGear</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Driver Login | Uber First Gear</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --uber-black: #000000;
-            --uber-white: #FFFFFF;
-            --uber-green: #06C167;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'UberMove', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #06C167 0%, #05a057 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #000000;
             min-height: 100vh;
+            display: flex;
+            color: #ffffff;
+        }
+
+        .split-container {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .brand-side {
+            flex: 1;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-side::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.02) 0%, transparent 50%);
+        }
+
+        .brand-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+            background: #ffffff;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 0 auto 32px;
         }
-        
-        .login-card {
-            background: white;
-            border-radius: 16px;
-            padding: 2.5rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 450px;
+
+        .brand-logo svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        .brand-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .brand-tagline {
+            font-size: 1.1rem;
+            color: #888888;
+            line-height: 1.6;
+        }
+
+        .driver-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 20px;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 24px;
+        }
+
+        .features-list {
+            margin-top: 48px;
+            text-align: left;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            color: #888888;
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-icon svg {
+            width: 20px;
+            height: 20px;
+            stroke: #ffffff;
+        }
+
+        .form-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            background: #0a0a0a;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #888888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #ffffff;
+        }
+
+        .back-link svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .form-container {
+            max-width: 400px;
             width: 100%;
+            margin: 0 auto;
         }
-        
-        .logo-text {
+
+        .form-header {
+            margin-bottom: 40px;
+        }
+
+        .form-title {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--uber-black);
-            margin-bottom: 2rem;
-            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
         }
-        
-        .driver-badge {
-            background: var(--uber-green);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            display: inline-block;
-            margin-bottom: 1rem;
+
+        .form-subtitle {
+            color: #888888;
+            font-size: 0.95rem;
         }
-        
-        .btn-success {
-            background-color: var(--uber-green);
-            border-color: var(--uber-green);
-            padding: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .btn-success:hover {
-            background-color: #05a057;
-        }
-        
-        .btn-outline-primary {
-            border-color: var(--uber-black);
-            color: var(--uber-black);
-            padding: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: var(--uber-black);
-            border-color: var(--uber-black);
-        }
-        
-        .form-control {
-            padding: 0.75rem;
-            border-radius: 8px;
-        }
-        
-        .tab-buttons {
+
+        .tabs {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            gap: 8px;
+            margin-bottom: 32px;
+            background: #1a1a1a;
+            padding: 6px;
+            border-radius: 12px;
         }
-        
-        .tab-buttons .btn {
+
+        .tab-btn {
             flex: 1;
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: #888888;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .tab-btn.active {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #888888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ffffff;
+            background: #0a0a0a;
+        }
+
+        .form-input::placeholder {
+            color: #555555;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: #ffffff;
+            border: none;
+            border-radius: 12px;
+            color: #000000;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover {
+            background: #e5e5e5;
+            transform: translateY(-2px);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 24px;
+        }
+
+        .form-footer a {
+            color: #888888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .form-footer a:hover {
+            color: #ffffff;
+        }
+
+        .message {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        @media (max-width: 900px) {
+            .split-container {
+                flex-direction: column;
+            }
+
+            .brand-side {
+                padding: 40px 24px;
+            }
+
+            .form-side {
+                padding: 40px 24px;
+            }
+
+            .brand-name {
+                font-size: 2rem;
+            }
+
+            .features-list {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <div class="logo-text">🚗 Uber FirstGear</div>
-        <div class="text-center">
-            <span class="driver-badge">Driver Portal</span>
+    <div class="split-container">
+        <div class="brand-side">
+            <a href="index.html" class="back-link">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to Home
+            </a>
+            
+            <div class="brand-content">
+                <div class="brand-logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <h1 class="brand-name">Uber First Gear</h1>
+                <p class="brand-tagline">Join our driver community. Accept ride requests or become a driving instructor.</p>
+                <span class="driver-badge">Driver Portal</span>
+                
+                <div class="features-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <span>Earn on your own schedule</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <span>Safe and verified rides</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                        </div>
+                        <span>Teach and earn as instructor</span>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="tab-buttons">
-            <button class="btn btn-success" id="loginTab">Login</button>
-            <button class="btn btn-outline-secondary" id="registerTab">Register</button>
+        <div class="form-side">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 class="form-title">Driver Access</h2>
+                    <p class="form-subtitle">Sign in or create your driver account</p>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" id="loginTab">Sign In</button>
+                    <button class="tab-btn" id="registerTab">Register</button>
+                </div>
+                
+                <div class="message" id="message"></div>
+                
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="loginEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Sign In as Driver</button>
+                    <div class="form-footer">
+                        <a href="login.html">Sign in as Rider instead</a>
+                    </div>
+                </form>
+                
+                <!-- Register Form -->
+                <form id="registerForm" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-input" id="registerUsername" placeholder="Choose a username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="registerEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="registerPassword" placeholder="Create a password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vehicle Details</label>
+                        <input type="text" class="form-input" id="registerVehicle" placeholder="e.g., Toyota Camry 2020" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Create Driver Account</button>
+                    <div class="form-footer">
+                        <a href="login.html">Register as Rider instead</a>
+                    </div>
+                </form>
+            </div>
         </div>
-        
-        <!-- Login Form -->
-        <form id="loginForm" style="display: block;">
-            <h3 class="mb-4">Welcome Back, Driver</h3>
-            <div class="mb-3">
-                <label for="loginEmail" class="form-label">Email</label>
-                <input type="email" class="form-control" id="loginEmail" required>
-            </div>
-            <div class="mb-3">
-                <label for="loginPassword" class="form-label">Password</label>
-                <input type="password" class="form-control" id="loginPassword" required>
-            </div>
-            <button type="submit" class="btn btn-success w-100">Login as Driver</button>
-            <div class="text-center mt-3">
-                <a href="login.html" class="text-muted">Login as Rider instead</a>
-            </div>
-        </form>
-        
-        <!-- Register Form -->
-        <form id="registerForm" style="display: none;">
-            <h3 class="mb-4">Become a Driver</h3>
-            <div class="mb-3">
-                <label for="registerUsername" class="form-label">Username</label>
-                <input type="text" class="form-control" id="registerUsername" required>
-            </div>
-            <div class="mb-3">
-                <label for="registerEmail" class="form-label">Email</label>
-                <input type="email" class="form-control" id="registerEmail" required>
-            </div>
-            <div class="mb-3">
-                <label for="registerPassword" class="form-label">Password</label>
-                <input type="password" class="form-control" id="registerPassword" required>
-            </div>
-            <div class="mb-3">
-                <label for="registerVehicle" class="form-label">Vehicle Details</label>
-                <input type="text" class="form-control" id="registerVehicle" placeholder="e.g., Toyota Camry 2020" required>
-            </div>
-            <button type="submit" class="btn btn-outline-primary w-100">Register as Driver</button>
-            <div class="text-center mt-3">
-                <a href="login.html" class="text-muted">Register as Rider instead</a>
-            </div>
-        </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const API_URL = 'http://localhost:8000/api';
         
@@ -149,20 +438,23 @@
         document.getElementById('loginTab').addEventListener('click', function() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('registerForm').style.display = 'none';
-            this.classList.remove('btn-outline-secondary');
-            this.classList.add('btn-success');
-            document.getElementById('registerTab').classList.remove('btn-success');
-            document.getElementById('registerTab').classList.add('btn-outline-secondary');
+            this.classList.add('active');
+            document.getElementById('registerTab').classList.remove('active');
         });
         
         document.getElementById('registerTab').addEventListener('click', function() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('registerForm').style.display = 'block';
-            this.classList.remove('btn-outline-secondary');
-            this.classList.add('btn-success');
-            document.getElementById('loginTab').classList.remove('btn-success');
-            document.getElementById('loginTab').classList.add('btn-outline-secondary');
+            this.classList.add('active');
+            document.getElementById('loginTab').classList.remove('active');
         });
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type}`;
+            msg.style.display = 'block';
+        }
         
         // Login
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -173,28 +465,25 @@
             try {
                 const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
                 
                 if (response.ok) {
                     const data = await response.json();
                     if (!data.user.is_driver) {
-                        alert('This account is not registered as a driver. Please use rider login.');
+                        showMessage('This account is not registered as a driver. Please use rider login.', 'error');
                         return;
                     }
-                    // Store user data in localStorage
                     localStorage.setItem('user', JSON.stringify(data.user));
-                    alert(`Welcome back, ${data.user.username}!`);
-                    window.location.href = 'driver.html';
+                    showMessage(`Welcome back, ${data.user.username}!`, 'success');
+                    setTimeout(() => window.location.href = 'driver.html', 1000);
                 } else {
                     const error = await response.json();
-                    alert(`Login failed: ${error.detail}`);
+                    showMessage(error.detail || 'Login failed', 'error');
                 }
             } catch (error) {
-                alert(`Error: ${error.message}`);
+                showMessage('Connection error. Please try again.', 'error');
             }
         });
         
@@ -209,9 +498,7 @@
             try {
                 const response = await fetch(`${API_URL}/auth/register`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         username, 
                         email, 
@@ -223,16 +510,15 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    // Store user data in localStorage
                     localStorage.setItem('user', JSON.stringify(data));
-                    alert(`Driver account created successfully! Welcome, ${data.username}!`);
-                    window.location.href = 'driver.html';
+                    showMessage(`Driver account created! Welcome, ${data.username}!`, 'success');
+                    setTimeout(() => window.location.href = 'driver.html', 1000);
                 } else {
                     const error = await response.json();
-                    alert(`Registration failed: ${error.detail}`);
+                    showMessage(error.detail || 'Registration failed', 'error');
                 }
             } catch (error) {
-                alert(`Error: ${error.message}`);
+                showMessage('Connection error. Please try again.', 'error');
             }
         });
         

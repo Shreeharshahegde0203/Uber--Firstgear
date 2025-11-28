@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Bid | FirstGear Instructor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Navigation */
+        .nav {
+            background: #000;
+            border-bottom: 1px solid #222;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            color: #888;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: #111;
+        }
+
+        /* Main Container */
+        .main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Back Button */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #888;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 32px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #fff;
+        }
+
+        .back-link svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-subtitle {
+            color: #888;
+            font-size: 16px;
+        }
+
+        /* Lesson Details Card */
+        .lesson-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .lesson-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #222;
+        }
+
+        .lesson-id {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .lesson-type {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .lesson-badge {
+            padding: 6px 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #888;
+        }
+
+        .lesson-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .lesson-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .lesson-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .lesson-value {
+            font-size: 15px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* Bid Form */
+        .bid-form {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .form-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #fff;
+        }
+
+        .form-input::placeholder {
+            color: #555;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #555;
+            margin-top: 6px;
+        }
+
+        /* Price Breakdown */
+        .price-breakdown {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+
+        .price-row:not(:last-child) {
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .price-label {
+            color: #888;
+        }
+
+        .price-value {
+            font-weight: 600;
+        }
+
+        .price-row.total {
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+
+        .price-row.total .price-label {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .price-row.total .price-value {
+            color: #22c55e;
+            font-size: 18px;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 16px 24px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #e5e5e5;
+        }
+
+        .btn-submit:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .message-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #222;
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tutor Badge */
+        .tutor-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .main {
+                padding: 24px 16px;
+            }
+
+            .lesson-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .lesson-card,
+            .bid-form {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="driver.html" class="nav-brand">FirstGear</a>
+            <div class="nav-links">
+                <a href="tutor-dashboard.html" class="nav-link">Browse</a>
+                <a href="tutor-my-lessons.html" class="nav-link">My Lessons</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main">
+        <a href="tutor-dashboard.html" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back to lessons
+        </a>
+
+        <div class="page-header">
+            <h1 class="page-title">Place Your Bid</h1>
+            <p class="page-subtitle">Review lesson details and submit your competitive bid</p>
+        </div>
+
+        <div id="loadingState" class="loading">
+            <div class="spinner"></div>
+            <p>Loading lesson details...</p>
+        </div>
+
+        <div id="contentState" style="display: none;">
+            <div class="lesson-card">
+                <div class="lesson-header">
+                    <div>
+                        <div class="lesson-id">Lesson <span id="lessonId">#--</span></div>
+                        <div class="lesson-type" id="lessonType">--</div>
+                    </div>
+                    <div class="lesson-badge" id="bidCount">-- bids</div>
+                </div>
+                <div class="lesson-grid">
+                    <div class="lesson-item">
+                        <span class="lesson-label">Date</span>
+                        <span class="lesson-value" id="lessonDate">--</span>
+                    </div>
+                    <div class="lesson-item">
+                        <span class="lesson-label">Time</span>
+                        <span class="lesson-value" id="lessonTime">--</span>
+                    </div>
+                    <div class="lesson-item">
+                        <span class="lesson-label">Duration</span>
+                        <span class="lesson-value" id="lessonDuration">--</span>
+                    </div>
+                    <div class="lesson-item">
+                        <span class="lesson-label">Vehicle</span>
+                        <span class="lesson-value" id="vehicleType">--</span>
+                    </div>
+                    <div class="lesson-item" style="grid-column: 1 / -1;">
+                        <span class="lesson-label">Pickup Location</span>
+                        <span class="lesson-value" id="pickupLocation">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bid-form">
+                <div class="tutor-badge">
+                    <span class="badge-dot"></span>
+                    <span>Bidding as Tutor #<span id="tutorIdDisplay">--</span></span>
+                </div>
+
+                <div id="successMessage" class="message message-success"></div>
+                <div id="errorMessage" class="message message-error"></div>
+
+                <form id="bidForm">
+                    <input type="hidden" id="tutorId" value="">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Your Bid (per hour)</label>
+                        <input type="number" id="bidAmount" class="form-input" 
+                               placeholder="Enter amount in Rs" min="100" max="2000" step="10" required>
+                        <p class="form-hint">Suggested range: Rs 200 - Rs 800 based on lesson type</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Message to Student (optional)</label>
+                        <textarea id="tutorMessage" class="form-input form-textarea" 
+                                  placeholder="Introduce yourself and highlight your expertise..."></textarea>
+                    </div>
+
+                    <div class="price-breakdown">
+                        <div class="price-row">
+                            <span class="price-label">Bid per hour</span>
+                            <span class="price-value" id="displayBidPerHour">Rs 0</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Duration</span>
+                            <span class="price-value" id="displayDuration">0 hrs</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Total bid</span>
+                            <span class="price-value" id="totalBid">Rs 0</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">Platform fee (15%)</span>
+                            <span class="price-value" id="platformFee">-Rs 0</span>
+                        </div>
+                        <div class="price-row total">
+                            <span class="price-label">Your earnings</span>
+                            <span class="price-value" id="yourEarnings">Rs 0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtn">Submit Bid</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="config.js"></script>
+    <script>
+        const API_URL = window.CONFIG?.API_URL || 'http://localhost:8000';
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingId = urlParams.get('booking_id');
+        let lessonDuration = 1;
+        let tutorId = null;
+
+        // Initialize tutor info - get tutor_id from user_id
+        async function initializeTutor() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.id) {
+                alert('Please login to place a bid');
+                window.location.href = 'driver-login.html';
+                return;
+            }
+
+            try {
+                // Get tutor profile using user_id
+                const response = await fetch(`${API_URL}/api/tutors/user/${user.id}`);
+                const data = await response.json();
+                
+                if (!data.is_tutor) {
+                    alert('You need to register as an instructor first');
+                    window.location.href = 'tutor-register.html';
+                    return;
+                }
+
+                tutorId = data.tutor.id;
+                document.getElementById('tutorId').value = tutorId;
+                document.getElementById('tutorIdDisplay').textContent = tutorId;
+                
+                // Store tutor info in localStorage for future use (both keys for compatibility)
+                localStorage.setItem('tutor', JSON.stringify(data.tutor));
+                localStorage.setItem('tutorData', JSON.stringify(data.tutor));
+            } catch (error) {
+                console.error('Error fetching tutor profile:', error);
+                alert('Failed to load your instructor profile. Please try again.');
+                window.location.href = 'tutor-dashboard.html';
+            }
+        }
+
+        // Load lesson details
+        async function loadLessonDetails() {
+            if (!bookingId) {
+                showError('No booking ID provided');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/lessons/booking/${bookingId}`);
+                if (!response.ok) throw new Error('Failed to load lesson');
+                
+                const data = await response.json();
+                displayLesson(data);
+            } catch (error) {
+                console.error('Load lesson error:', error);
+                showError('Failed to load lesson details');
+            }
+        }
+
+        function displayLesson(data) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('contentState').style.display = 'block';
+
+            document.getElementById('lessonId').textContent = '#' + data.booking_id;
+            document.getElementById('lessonType').textContent = formatLessonType(data.lesson_type);
+            document.getElementById('bidCount').textContent = data.total_bids + ' bids';
+            document.getElementById('lessonDate').textContent = formatDate(data.lesson_date);
+            document.getElementById('lessonTime').textContent = data.start_time + ' - ' + data.end_time;
+            document.getElementById('lessonDuration').textContent = data.duration_hours + ' hours';
+            document.getElementById('vehicleType').textContent = data.student_vehicle ? 'Student provides' : 'Instructor provides';
+            document.getElementById('pickupLocation').textContent = data.pickup_location;
+
+            lessonDuration = data.duration_hours;
+            document.getElementById('displayDuration').textContent = lessonDuration + ' hrs';
+        }
+
+        function formatLessonType(type) {
+            const types = {
+                'beginner': 'Beginner Training',
+                'intermediate': 'Intermediate Course',
+                'advanced': 'Advanced Skills',
+                'test_prep': 'License Test Preparation',
+                'highway': 'Highway Driving',
+                'parking': 'Parking Mastery',
+                'defensive_driving': 'Defensive Driving'
+            };
+            return types[type] || type;
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function showError(message) {
+            document.getElementById('loadingState').innerHTML = `
+                <p style="color: #ef4444;">${message}</p>
+                <a href="tutor-dashboard.html" style="color: #888; margin-top: 16px; display: inline-block;">Return to dashboard</a>
+            `;
+        }
+
+        // Calculate pricing
+        document.getElementById('bidAmount').addEventListener('input', function() {
+            const bidPerHour = parseFloat(this.value) || 0;
+            const total = bidPerHour * lessonDuration;
+            const fee = total * 0.15;
+            const earnings = total - fee;
+
+            document.getElementById('displayBidPerHour').textContent = 'Rs ' + bidPerHour;
+            document.getElementById('totalBid').textContent = 'Rs ' + total.toFixed(0);
+            document.getElementById('platformFee').textContent = '-Rs ' + fee.toFixed(0);
+            document.getElementById('yourEarnings').textContent = 'Rs ' + earnings.toFixed(0);
+        });
+
+        // Form submission
+        document.getElementById('bidForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+            
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            const data = {
+                tutor_id: parseInt(document.getElementById('tutorId').value),
+                booking_id: parseInt(bookingId),
+                bid_amount_per_hour: parseFloat(document.getElementById('bidAmount').value),
+                tutor_message: document.getElementById('tutorMessage').value || null
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/api/lessons/bid`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || 'Failed to submit bid');
+                }
+
+                const result = await response.json();
+                
+                successMsg.innerHTML = `
+                    <strong>Bid submitted successfully</strong><br>
+                    Bid ID: #${result.bid_id} | Total: Rs ${result.total_bid_amount} | Rank: ${result.bid_rank || 'Pending'}
+                `;
+                successMsg.style.display = 'block';
+                
+                document.getElementById('bidForm').reset();
+
+                setTimeout(() => {
+                    window.location.href = 'tutor-my-lessons.html';
+                }, 2000);
+
+            } catch (error) {
+                errorMsg.textContent = error.message || 'Network error. Please try again.';
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Bid';
+            }
+        });
+
+        // Initialize
+        initializeTutor();
+        loadLessonDetails();
+    </script>
+</body>
+</html>

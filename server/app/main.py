@@ -1,14 +1,16 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from typing import Dict
 import logging
+import asyncio
 
 import os
 
 from .db.database import engine, get_db
 from .db.models import Base, Ride
-from .api import ping, users, rides, ride_requests, auth
+from .api import ping, users, rides, ride_requests, auth, tutors, lessons, quiz
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +41,14 @@ app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(rides.router, prefix="/api/rides", tags=["rides"])
 app.include_router(ride_requests.router, prefix="/api/ride", tags=["ride-requests"])
+app.include_router(tutors.router, tags=["tutors"])  # NEW: Tutor endpoints
+app.include_router(lessons.router, tags=["lessons"])  # NEW: Lesson endpoints
+app.include_router(quiz.router)  # NEW: Quiz endpoints
+
+# Mount static files for client
+client_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client")
+if os.path.exists(client_path):
+    app.mount("/client", StaticFiles(directory=client_path, html=True), name="client")
 
 
 # -----------------------------
@@ -166,3 +176,36 @@ def db_test(db: Session = Depends(get_db)):
         return {"success": True, "ride_count": count}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+# -----------------------------
+# Startup event - Start background workers
+# -----------------------------
+@app.on_event("startup")
+async def startup_event():
+    from .services.matching_engine import matching_engine
+    from .services.bidding_engine import start_bidding_engine
+    from .api import lessons
+    
+    logger.info("🚀 Starting Uber FirstGear API...")
+    # Set websocket manager for matching engine
+    matching_engine.set_websocket_manager(manager)
+    # Set websocket manager for lesson notifications
+    lessons.set_websocket_manager(manager)
+    # Start matching engine in background
+    asyncio.create_task(matching_engine.start())
+    # Start bidding engine
+    start_bidding_engine()
+    logger.info("✅ All background workers started!")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    from .services.matching_engine import matching_engine
+    from .services.bidding_engine import stop_bidding_engine
+    
+    logger.info("🛑 Shutting down background workers...")
+    matching_engine.running = False
+    stop_bidding_engine()
+    logger.info("✅ Shutdown complete!")
+

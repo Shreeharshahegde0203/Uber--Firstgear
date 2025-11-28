@@ -3,1297 +3,1288 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uber FirstGear - Driver Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <title>Uber First Gear | Drive & Teach</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root {
-            --uber-black: #000000;
-            --uber-white: #FFFFFF;
-            --uber-green: #06C167;
-            --uber-blue: #276EF1;
-            --uber-gray: #F6F6F6;
-            --driver-color: #276EF1; /* Will be set dynamically per driver */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'UberMove', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--uber-gray);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            line-height: 1.6;
         }
-        
+
+        /* Navigation */
         .navbar {
-            background-color: var(--uber-black);
-            padding: 1rem 2rem;
-        }
-        
-        .navbar-brand {
-            font-weight: 600;
-            font-size: 1.5rem;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
-        }
-        
-        .btn-primary {
-            background-color: var(--uber-black);
-            border-color: var(--uber-black);
-        }
-        
-        .btn-primary:hover {
-            background-color: #333;
-            border-color: #333;
-        }
-        
-        .btn-success {
-            background-color: var(--uber-green);
-            border-color: var(--uber-green);
-        }
-        
-        .btn-success:hover {
-            background-color: #05a057;
-            border-color: #05a057;
-        }
-        
-        .ride-request {
-            transition: transform 0.2s;
-        }
-        
-        .ride-request:hover {
-            transform: translateY(-5px);
-        }
-        
-        #map {
-            height: 400px;
-            width: 100%;
-            border-radius: 12px;
-        }
-        
-        .status-online {
-            color: var(--uber-green);
-        }
-        
-        .status-offline {
-            color: #dc3545;
-        }
-        
-        footer {
-            background-color: var(--uber-black);
-            color: white;
-            padding: 2rem 0;
-            margin-top: 3rem;
-        }
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 10px;
-        }
-        .star-rating {
-            color: #FFD700;
-            font-size: 1.2rem;
-        }
-        
-        /* NOTIFICATION ENHANCEMENTS */
-        .ws-status {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 15px;
-        }
-        
-        .ws-status.connected {
-            background-color: rgba(6, 193, 103, 0.1);
-            color: var(--uber-green);
-        }
-        
-        .ws-status.disconnected {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-        }
-        
-        .ws-status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .ws-status.connected .ws-status-dot {
-            background-color: var(--uber-green);
-        }
-        
-        .ws-status.disconnected .ws-status-dot {
-            background-color: #dc3545;
-        }
-        
-        .ride-offer-banner {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(135deg, var(--driver-color), var(--uber-blue));
-            color: white;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 9999;
-            animation: slideDown 0.5s ease-out;
-            border-bottom: 4px solid var(--driver-color);
-        }
-        
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-            }
-            to {
-                transform: translateY(0);
-            }
-        }
-        
-        .ride-offer-banner h3 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .ride-offer-banner .timer {
-            font-size: 3rem;
-            font-weight: 900;
-            text-align: center;
-            margin: 10px 0;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-        }
-        
-        .driver-badge {
-            position: fixed;
-            top: 60px;
-            right: 20px;
-            background-color: var(--driver-color);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 1000;
-        }
-        
-        @keyframes flash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-        
-        .flashing {
-            animation: flash 0.5s ease-in-out infinite;
-        }
-        
-        /* Active Ride Card */
-        .active-ride-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            animation: fadeIn 0.5s ease-out;
-        }
-        
-        .active-ride-card h3 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .active-ride-card .ride-info {
-            background: rgba(255,255,255,0.15);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.95);
             backdrop-filter: blur(10px);
+            border-bottom: 1px solid #1a1a1a;
+            padding: 16px 0;
         }
-        
-        .active-ride-card .ride-info p {
-            margin: 10px 0;
-            font-size: 1.1rem;
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        
-        .active-ride-card .ride-info strong {
-            display: inline-block;
-            width: 120px;
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 700;
         }
-        
-        .active-ride-card .status-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 25px;
-            font-weight: 600;
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: #888888;
+            text-decoration: none;
             font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
+            font-weight: 500;
+            transition: color 0.2s;
         }
-        
-        .status-badge.accepted {
-            background: #10b981;
-            color: white;
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #ffffff;
         }
-        
-        .status-badge.in-progress {
-            background: #f59e0b;
-            color: white;
+
+        .nav-auth {
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-        
-        .active-ride-card .btn-ride-action {
-            padding: 15px 30px;
+
+        .nav-auth a {
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-login {
+            color: #ffffff;
+            padding: 10px 20px;
+        }
+
+        .btn-signup {
+            background: #ffffff;
+            color: #000000;
+            padding: 10px 24px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-signup:hover {
+            background: #e5e5e5;
+        }
+
+        .user-menu {
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: #333333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .user-name {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .btn-logout {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #333333;
+            color: #888888;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 24px 80px;
+            background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+
+        .hero-content p {
+            font-size: 1.1rem;
+            color: #888888;
+            margin-bottom: 40px;
+            max-width: 480px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn-primary {
+            padding: 16px 32px;
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #e5e5e5;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            padding: 16px 32px;
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #333333;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            border-color: #ffffff;
+        }
+
+        /* Hero Visual */
+        .hero-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .hero-image-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .hero-image-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .hero-image-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Stats Card */
+        .stats-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 24px;
+            padding: 24px;
+        }
+
+        .stats-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .stats-title {
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 12px;
-            border: none;
+        }
+
+        .stats-badge {
+            padding: 6px 12px;
+            background: #1a3d1a;
+            color: #4ade80;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .stat-item {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #888888;
+        }
+
+        /* Promo Banner */
+        .promo-banner {
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid #1a1a1a;
+            position: relative;
+        }
+
+        .promo-banner img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .promo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+        }
+
+        .promo-tagline {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .promo-subtext {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* Professional Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-fade-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .animate-fade-left {
+            animation: fadeInLeft 0.8s ease-out forwards;
+        }
+
+        .animate-fade-right {
+            animation: fadeInRight 0.8s ease-out forwards;
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
+        /* Live Badge Pulse */
+        .stats-badge {
+            padding: 6px 12px;
+            background: #1a3d1a;
+            color: #4ade80;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stats-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Enhanced Hover Effects */
+        .stat-item {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
             transition: all 0.3s ease;
         }
-        
-        .active-ride-card .btn-ride-action:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+
+        .stat-item:hover {
+            transform: translateY(-4px);
+            background: #222;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .stats-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 24px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            border-color: #333;
+            box-shadow: 0 0 40px rgba(255,255,255,0.05);
+        }
+
+        /* Services Section */
+        .services {
+            padding: 120px 24px;
+            background: #000000;
+        }
+
+        .services-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #888888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .service-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 24px;
+            padding: 40px;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .service-card:hover {
+            border-color: #333333;
+            transform: translateY(-4px);
+        }
+
+        .service-icon {
+            width: 64px;
+            height: 64px;
+            background: #1a1a1a;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .service-icon svg {
+            width: 32px;
+            height: 32px;
+            stroke: #ffffff;
+        }
+
+        .service-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .service-desc {
+            color: #888888;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .service-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .service-link svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.2s;
+        }
+
+        .service-card:hover .service-link svg {
+            transform: translateX(4px);
+        }
+
+        /* Driver Dashboard Section (Hidden by default) */
+        .dashboard-section {
+            display: none;
+            padding: 100px 24px 60px;
+        }
+
+        .dashboard-section.active {
+            display: block;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #888888;
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 24px;
+            padding: 0;
+            font-family: inherit;
+        }
+
+        .back-btn:hover {
+            color: #ffffff;
+        }
+
+        .dashboard-header {
+            margin-bottom: 32px;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .dashboard-subtitle {
+            color: #888888;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 32px;
+        }
+
+        .rides-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .ride-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .ride-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .ride-id {
+            font-weight: 600;
+        }
+
+        .ride-badge {
+            padding: 4px 12px;
+            background: #1a3d1a;
+            color: #4ade80;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .ride-details {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .ride-detail {
+            display: flex;
+            gap: 12px;
+        }
+
+        .ride-detail-label {
+            color: #888888;
+            min-width: 80px;
+        }
+
+        .btn-accept {
+            width: 100%;
+            padding: 14px;
+            background: #22c55e;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-accept:hover {
+            background: #16a34a;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .sidebar-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .sidebar-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .driver-profile {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .driver-avatar {
+            width: 56px;
+            height: 56px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .driver-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .driver-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #888888;
+            font-size: 0.9rem;
+        }
+
+        .driver-rating svg {
+            width: 16px;
+            height: 16px;
+            fill: #fbbf24;
+        }
+
+        .driver-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .driver-stat {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .driver-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .driver-stat-label {
+            font-size: 0.75rem;
+            color: #888888;
+        }
+
+        .status-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #1a1a1a;
+            border-radius: 12px;
+        }
+
+        .status-label {
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333333;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #22c55e;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        #map {
+            height: 200px;
+            border-radius: 12px;
+            background: #1a1a1a;
+        }
+
+        .no-rides {
+            text-align: center;
+            padding: 60px 24px;
+            color: #888888;
+        }
+
+        .no-rides svg {
+            width: 64px;
+            height: 64px;
+            stroke: #333333;
+            margin-bottom: 16px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 60px 24px;
+            background: #000000;
+            border-top: 1px solid #1a1a1a;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-brand {
+            font-weight: 600;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .footer-links a {
+            color: #888888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #ffffff;
+        }
+
+        .footer-copy {
+            color: #555555;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 900px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Driver Badge -->
-    <div class="driver-badge" id="driverBadge">Driver #?</div>
-    
-    <!-- Ride Offer Banner (hidden by default) -->
-    <div id="rideOfferBanner" style="display: none;"></div>
-    
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="#">Uber FirstGear - Driver</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <span class="ws-status disconnected" id="wsStatus">
-                            <span class="ws-status-dot"></span>
-                            <span id="wsStatusText">Connecting...</span>
-                        </span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Earnings</a>
-                    </li>
-                    <li class="nav-item">
-                        <span class="nav-link text-white" id="driverName">👤 Driver</span>
-                    </li>
-                    <li class="nav-item">
-                        <span class="nav-link">
-                            <div class="form-check form-switch d-inline-block">
-                                <input class="form-check-input" type="checkbox" id="onlineToggle" checked>
-                                <label class="form-check-label status-online" for="onlineToggle" id="statusLabel">Online</label>
-                            </div>
-                        </span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-sm btn-danger ms-lg-2" href="#" onclick="logout()">Logout</a>
-                    </li>
-                </ul>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="driver.html" class="nav-brand">Uber First Gear</a>
+            
+            <div class="nav-links">
+                <a href="driver.html" class="active">Home</a>
+                <a href="#" onclick="showDashboard(); return false;">Accept Rides</a>
+                <a href="tutor-dashboard.html">Browse Lessons</a>
+                <a href="tutor-my-lessons.html">My Lessons</a>
+            </div>
+            
+            <div class="nav-auth" id="authButtons">
+                <a href="driver-login.html" class="btn-login">Sign In</a>
+                <a href="driver-login.html" class="btn-signup">Get Started</a>
+            </div>
+            
+            <div class="user-menu" id="userMenu">
+                <div class="user-avatar" id="userAvatar">D</div>
+                <span class="user-name" id="userName">Driver</span>
+                <button class="btn-logout" onclick="logout()">Sign Out</button>
             </div>
         </div>
     </nav>
 
-    <div class="container my-5">
-        <div class="row">
-            <div class="col-md-8">
-                <h2 class="mb-4">Available Ride Requests</h2>
-                <div id="rideRequests" class="mb-4">
-                    <p class="text-muted">Loading ride requests...</p>
+    <!-- Hero Section -->
+    <section class="hero" id="heroSection">
+        <div class="hero-container">
+            <div class="hero-content animate-fade-left">
+                <h1 class="animate-fade-up">Teach & Earn on Your Schedule</h1>
+                <p class="animate-fade-up delay-1">Become a professional driving instructor in your area, set your own hours, and connect with students. Unlock your earning potential with Uber First Gear.</p>
+                <div class="hero-buttons animate-fade-up delay-2">
+                    <a href="tutor-register.html" class="btn-primary">
+                        Become An Instructor
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                    <a href="#services" class="btn-secondary">Learn More</a>
+                </div>
+            </div>
+            
+            <div class="hero-visual animate-fade-right">
+                <div class="promo-banner animate-float">
+                    <img src="https://i.ibb.co/yBb0nZvx/Gemini-Generated-Image-kcnjy9kcnjy9kcnj.png" alt="Uber First Gear - Teach Earn Drive">
+                    <div class="promo-overlay">
+                        <div class="promo-tagline">Teach. Earn. Drive.</div>
+                        <div class="promo-subtext">Your earnings, your schedule, your rules</div>
+                    </div>
                 </div>
                 
-                <h2 class="mb-4">Current Ride</h2>
-                <div class="card" id="currentRide">
-                    <div class="card-body">
-                        <p class="text-muted">No active ride</p>
+                <div class="stats-card">
+                    <div class="stats-header">
+                        <span class="stats-title">For Drivers/Instructors</span>
+                        <span class="stats-badge">Live</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">₹45K</div>
+                            <div class="stat-label">Avg. Monthly</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">500+</div>
+                            <div class="stat-label">Instructors</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">4.9★</div>
+                            <div class="stat-label">Rating</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <h2 class="mb-4">Driver Stats</h2>
-                <div class="card mb-4">
-                    <div class="card-body d-flex align-items-center">
-                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Avatar" class="avatar">
-                        <div>
-                            <h5 class="card-title mb-1">John Driver</h5>
-                            <div class="star-rating mb-1">
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star"></i>
-                                <i class="fa-solid fa-star-half-stroke"></i>
-                                <span class="ms-2">(4.9)</span>
-                            </div>
-                            <p class="card-text mb-1">Driver ID: 2</p>
-                            <p class="card-text mb-1">Today's Earnings: <b>$78.50</b></p>
-                            <p class="card-text mb-0">Rides Completed: <b>147</b></p>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services" id="services">
+        <div class="services-container">
+            <div class="section-header">
+                <div class="section-label">Your Options</div>
+                <h2 class="section-title">Choose how you earn</h2>
+            </div>
+            
+            <div class="services-grid">
+                <div class="service-card" onclick="showDashboard()">
+                    <div class="service-icon">
+                        <svg fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="service-title">Accept Ride Requests</h3>
+                    <p class="service-desc">Drive passengers to their destinations. Accept ride requests in real-time and earn money on your schedule.</p>
+                    <span class="service-link">
+                        Start driving
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </span>
+                </div>
+                
+                <a href="tutor-dashboard.html" class="service-card">
+                    <div class="service-icon">
+                        <svg fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    <h3 class="service-title">Driving Instructor</h3>
+                    <p class="service-desc">Teach others to drive and share your expertise. Browse available lesson requests and place competitive bids.</p>
+                    <span class="service-link">
+                        Browse lessons
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Driver Dashboard Section (Hidden by default) -->
+    <section class="dashboard-section" id="dashboardSection">
+        <div class="dashboard-container">
+            <button class="back-btn" onclick="hideDashboard()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to services
+            </button>
+            
+            <div class="dashboard-header">
+                <h2 class="dashboard-title">Available Ride Requests</h2>
+                <p class="dashboard-subtitle">Accept rides and start earning</p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="rides-section">
+                    <h3>Pending Requests</h3>
+                    <div id="rideRequests">
+                        <div class="no-rides">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            <p>No ride requests available</p>
+                            <p style="font-size: 0.85rem;">New requests will appear here automatically</p>
+                        </div>
+                    </div>
+                    
+                    <h3 style="margin-top: 32px;">Current Ride</h3>
+                    <div id="currentRide">
+                        <div class="ride-card">
+                            <p style="color: #888888; text-align: center;">No active ride</p>
                         </div>
                     </div>
                 </div>
                 
-                <h2 class="mb-4">Your Location</h2>
-                <div id="map" class="mb-4">
-                    <!-- Leaflet map will be loaded here -->
-                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <div class="sidebar">
+                    <div class="sidebar-card">
+                        <h3>Driver Profile</h3>
+                        <div class="driver-profile">
+                            <div class="driver-avatar" id="driverAvatar">D</div>
+                            <div class="driver-info">
+                                <h4 id="driverName">Driver</h4>
+                                <div class="driver-rating">
+                                    <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    4.9 Rating
+                                </div>
+                            </div>
+                        </div>
+                        <div class="driver-stats">
+                            <div class="driver-stat">
+                                <div class="driver-stat-value">$78.50</div>
+                                <div class="driver-stat-label">Today</div>
+                            </div>
+                            <div class="driver-stat">
+                                <div class="driver-stat-value">147</div>
+                                <div class="driver-stat-label">Total Rides</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sidebar-card">
+                        <h3>Status</h3>
+                        <div class="status-toggle">
+                            <span class="status-label" id="statusLabel">Online</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="onlineToggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="sidebar-card">
+                        <h3>Your Location</h3>
+                        <div id="map"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>Uber FirstGear Driver</h5>
-                    <p>Accept ride requests and earn money on your schedule.</p>
-                </div>
-                <div class="col-md-3">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="#" class="text-white">Help Center</a></li>
-                        <li><a href="#" class="text-white">Earnings</a></li>
-                        <li><a href="#" class="text-white">Account</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <h5>Contact</h5>
-                    <p>Email: drivers@miniuber.example<br>
-                    Phone: +1 (123) 456-7890</p>
-                </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">Uber First Gear</div>
+            
+            <div class="footer-links">
+                <a href="tutor-dashboard.html">Browse Lessons</a>
+                <a href="tutor-my-lessons.html">My Lessons</a>
+                <a href="tutor-register.html">Become Instructor</a>
+                <a href="driver-login.html">Sign In</a>
             </div>
-            <div class="row mt-3">
-                <div class="col text-center">
-                    <p>© 2025 Uber FirstGear. All rights reserved.</p>
-                </div>
+            
+            <div class="footer-copy">
+                &copy; 2025 Uber First Gear. All rights reserved.
             </div>
         </div>
     </footer>
 
-    <!-- Template for ride request card -->
-    <template id="rideRequestTemplate">
-        <div class="card ride-request mb-3 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                    <i class="fa-solid fa-location-dot fa-2x text-primary me-2"></i>
-                    <h5 class="card-title mb-0">Ride Request #<span class="ride-id"></span></h5>
-                    <span class="badge bg-success ms-2 badge-animated">New</span>
-                </div>
-                <div class="row">
-                    <div class="col-md-8">
-                        <p class="card-text mb-1"><strong>From:</strong> <span class="start-location"></span></p>
-                        <p class="card-text mb-1"><strong>To:</strong> <span class="end-location"></span></p>
-                        <p class="card-text mb-1"><strong>Rider:</strong> <span class="rider-id"></span></p>
-                        <p class="card-text mb-1"><strong>Requested at:</strong> <span class="created-at"></span></p>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-center">
-                        <button class="btn btn-success w-100 accept-btn">Accept Ride</button>
-                    </div>
-                </div>
-            </div>
-    <div class="toast-container" id="toastContainer"></div>
-        </div>
-    </template>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="config.js"></script>
     <script>
-        // Check authentication
+        const API_URL = window.CONFIG?.API_URL || 'http://localhost:8000';
+        let map = null;
+        let ws = null;
         let currentDriver = null;
-        if (localStorage.getItem('user')) {
-            currentDriver = JSON.parse(localStorage.getItem('user'));
-            if (!currentDriver.is_driver) {
-                alert('You are logged in as a rider. Redirecting to rider page...');
-                window.location.href = 'index.html';
+
+        // Check authentication
+        function checkAuth() {
+            const user = localStorage.getItem('user');
+            if (user) {
+                currentDriver = JSON.parse(user);
+                document.getElementById('authButtons').style.display = 'none';
+                document.getElementById('userMenu').style.display = 'flex';
+                document.getElementById('userName').textContent = currentDriver.username || 'Driver';
+                document.getElementById('userAvatar').textContent = (currentDriver.username || 'D').substring(0, 1).toUpperCase();
+                document.getElementById('driverAvatar').textContent = (currentDriver.username || 'D').substring(0, 1).toUpperCase();
+                document.getElementById('driverName').textContent = currentDriver.username || 'Driver';
             }
-            // Show driver name
-            document.getElementById('driverName').textContent = `👤 ${currentDriver.username}`;
-        } else {
-            alert('Please login as a driver to continue');
-            window.location.href = 'driver-login.html';
         }
-        
+
         function logout() {
             localStorage.removeItem('user');
-            alert('Logged out successfully');
-            window.location.href = 'driver-login.html';
+            if (ws) ws.close();
+            window.location.reload();
         }
-        
-        // Toast notification helper
-        function showToast(message, type = 'info') {
-            const toastContainer = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast align-items-center text-bg-${type} border-0 show mb-2`;
-            toast.role = 'alert';
-            toast.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
-            toastContainer.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
+
+        function showDashboard() {
+            if (!currentDriver) {
+                alert('Please sign in to accept ride requests');
+                window.location.href = 'driver-login.html';
+                return;
+            }
+            document.getElementById('heroSection').style.display = 'none';
+            document.getElementById('services').style.display = 'none';
+            document.getElementById('dashboardSection').classList.add('active');
+            initMap();
+            loadRideRequests();
+            connectWebSocket();
         }
-        let map, pickupMarker, destMarker, driverMarker;
-    let ws, currentRideId = null;
-    let routeLine;
-        let pickupLatLng = null, destLatLng = null, driverLatLng = null;
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Leaflet map
-            map = L.map('map').setView([12.9716, 77.5946], 13); // Default to Bangalore
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-            // Get driver's current location
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    driverLatLng = [position.coords.latitude, position.coords.longitude];
-                    if (driverMarker) map.removeLayer(driverMarker);
-                    driverMarker = L.marker(driverLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Your Location').openPopup();
-                    map.setView(driverLatLng, 15);
-                    
-                    // Update driver location in backend
-                    fetch(`${API_URL}/users/${DRIVER_ID}/location`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            latitude: driverLatLng[0], 
-                            longitude: driverLatLng[1] 
-                        })
+
+        function hideDashboard() {
+            document.getElementById('heroSection').style.display = 'flex';
+            document.getElementById('services').style.display = 'block';
+            document.getElementById('dashboardSection').classList.remove('active');
+        }
+
+        function initMap() {
+            if (!map) {
+                map = L.map('map').setView([40.7128, -74.0060], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '© OpenStreetMap'
+                }).addTo(map);
+
+                // Get current location
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+                        L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(map);
                     });
+                }
+            }
+        }
+
+        async function loadRideRequests() {
+            try {
+                const response = await fetch(`${API_URL}/api/rides?status=requested`);
+                if (response.ok) {
+                    const rides = await response.json();
+                    renderRideRequests(rides);
+                }
+            } catch (error) {
+                console.error('Error loading rides:', error);
+            }
+        }
+
+        function renderRideRequests(rides) {
+            const container = document.getElementById('rideRequests');
+            if (!rides || rides.length === 0) {
+                container.innerHTML = `
+                    <div class="no-rides">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <p>No ride requests available</p>
+                        <p style="font-size: 0.85rem;">New requests will appear here automatically</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = rides.map(ride => `
+                <div class="ride-card">
+                    <div class="ride-header">
+                        <span class="ride-id">Ride #${ride.id}</span>
+                        <span class="ride-badge">New</span>
+                    </div>
+                    <div class="ride-details">
+                        <div class="ride-detail">
+                            <span class="ride-detail-label">From:</span>
+                            <span>${ride.pickup_address || 'Pickup location'}</span>
+                        </div>
+                        <div class="ride-detail">
+                            <span class="ride-detail-label">To:</span>
+                            <span>${ride.destination_address || 'Destination'}</span>
+                        </div>
+                        <div class="ride-detail">
+                            <span class="ride-detail-label">Rider:</span>
+                            <span>Rider #${ride.rider_id}</span>
+                        </div>
+                    </div>
+                    <button class="btn-accept" onclick="acceptRide(${ride.id})">Accept Ride</button>
+                </div>
+            `).join('');
+        }
+
+        async function acceptRide(rideId) {
+            if (!currentDriver) {
+                alert('Please sign in first');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/rides/${rideId}/accept`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ driver_id: currentDriver.id })
                 });
+
+                if (response.ok) {
+                    alert('Ride accepted successfully!');
+                    loadRideRequests();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Failed to accept ride');
+                }
+            } catch (error) {
+                alert('Connection error. Please try again.');
             }
-            const API_URL = 'http://localhost:8000/api';
-            const WS_URL = 'ws://localhost:8000';
-            const DRIVER_ID = currentDriver.id;  // Use logged-in driver's ID
-            let notificationWs = null;  // WebSocket for ride offer notifications
-            let currentOfferId = null;  // Track current offer
-            let offerTimer = null;  // Countdown timer
-            let originalTitle = document.title; // Store original title for flashing
-            let titleFlashInterval = null; // Title flash animation
+        }
+
+        function connectWebSocket() {
+            if (!currentDriver) return;
             
-            // Driver color assignment based on ID
-            const driverColors = {
-                2: '#276EF1',  // Blue
-                3: '#06C167',  // Green  
-                4: '#FF6B35',  // Orange
-                7: '#9B51E0'   // Purple
+            const wsUrl = `ws://localhost:8000/ws/driver/${currentDriver.id}`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
             };
-            const driverColor = driverColors[DRIVER_ID] || '#276EF1';
-            document.documentElement.style.setProperty('--driver-color', driverColor);
-            
-            // Update driver badge
-            document.getElementById('driverBadge').textContent = `Driver #${DRIVER_ID}`;
-            document.getElementById('driverBadge').style.backgroundColor = driverColor;
-            
-            // Sound effects for notifications
-            function playNotificationSound() {
-                // Create a simple beep sound using Web Audio API
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 800; // Frequency in Hz
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
-            }
-            
-            // Title flashing for new ride offers
-            function startTitleFlashing() {
-                stopTitleFlashing();
-                let isOriginal = true;
-                titleFlashInterval = setInterval(() => {
-                    document.title = isOriginal ? '🔔 NEW RIDE OFFER!' : originalTitle;
-                    isOriginal = !isOriginal;
-                }, 1000);
-            }
-            
-            function stopTitleFlashing() {
-                if (titleFlashInterval) {
-                    clearInterval(titleFlashInterval);
-                    titleFlashInterval = null;
-                    document.title = originalTitle;
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'new_ride_request') {
+                    loadRideRequests();
                 }
-            }
-            
-            // Show desktop notification (if permission granted)
-            function showDesktopNotification(title, body) {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification(title, {
-                        body: body,
-                        icon: 'https://www.uber.com/favicon.ico',
-                        badge: 'https://www.uber.com/favicon.ico'
-                    });
-                }
-            }
-            
-            // Request notification permission
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-            
-            // Update WebSocket status indicator
-            function updateWSStatus(connected) {
-                const wsStatus = document.getElementById('wsStatus');
-                const wsStatusText = document.getElementById('wsStatusText');
-                
-                if (connected) {
-                    wsStatus.className = 'ws-status connected';
-                    wsStatusText.textContent = 'Connected';
-                    console.log('✅ WebSocket status: CONNECTED');
-                } else {
-                    wsStatus.className = 'ws-status disconnected';
-                    wsStatusText.textContent = 'Disconnected';
-                    console.log('❌ WebSocket status: DISCONNECTED');
-                }
-            }
-            
-            // Online/offline toggle
-            const onlineToggle = document.getElementById('onlineToggle');
-            const statusLabel = document.getElementById('statusLabel');
-            
-            onlineToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    statusLabel.textContent = 'Online';
-                    statusLabel.className = 'form-check-label status-online';
-                    // Update driver availability in backend
-                    fetch(`${API_URL}/users/${DRIVER_ID}/availability`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ availability: true })
-                    }).then(() => {
-                        showToast('You are now online and can receive ride offers', 'success');
-                        connectNotificationWebSocket();  // Connect to notifications
-                    }).catch(err => {
-                        showToast('Failed to update online status', 'danger');
-                    });
-                } else {
-                    statusLabel.textContent = 'Offline';
-                    statusLabel.className = 'form-check-label status-offline';
-                    // Update driver availability in backend
-                    fetch(`${API_URL}/users/${DRIVER_ID}/availability`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ availability: false })
-                    }).then(() => {
-                        showToast('You are now offline', 'info');
-                        disconnectNotificationWebSocket();  // Disconnect notifications
-                    }).catch(err => {
-                        showToast('Failed to update offline status', 'danger');
-                    });
-                }
-            });
-            
-            // ============================================
-            // WEBSOCKET NOTIFICATION SYSTEM (NEW!)
-            // ============================================
-            
-            function connectNotificationWebSocket() {
-                if (notificationWs) {
-                    notificationWs.close();
-                }
-                
-                updateWSStatus(false);
-                console.log(`🔌 [Driver #${DRIVER_ID}] Connecting to notification WebSocket...`);
-                notificationWs = new WebSocket(`${WS_URL}/ws/notifications/${DRIVER_ID}`);
-                
-                notificationWs.onopen = () => {
-                    updateWSStatus(true);
-                    console.log(`✅ [Driver #${DRIVER_ID}] Connected to notification system`);
-                    showToast('🟢 Connected - Ready to receive rides!', 'success');
-                };
-                
-                notificationWs.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
-                    console.log(`📩 [Driver #${DRIVER_ID}] Received notification:`, data);
-                    
-                    if (data.type === 'ride_offer_received') {
-                        // NEW RIDE OFFER!
-                        console.log(`🎉 [Driver #${DRIVER_ID}] NEW RIDE OFFER RECEIVED! Ride #${data.ride.id}`);
-                        displayRideOffer(data.ride);
-                    } else if (data.type === 'ride_offer_expired') {
-                        // Offer expired
-                        console.log(`⏰ [Driver #${DRIVER_ID}] Ride offer expired`);
-                        clearRideOffer();
-                        showToast('Ride offer expired', 'warning');
-                    } else if (data.type === 'ride_assigned_elsewhere') {
-                        // Another driver accepted
-                        console.log(`ℹ️ [Driver #${DRIVER_ID}] Ride was accepted by another driver`);
-                        clearRideOffer();
-                        showToast('Ride was accepted by another driver', 'info');
-                    }
-                };
-                
-                notificationWs.onerror = (error) => {
-                    updateWSStatus(false);
-                    console.error(`❌ [Driver #${DRIVER_ID}] WebSocket error:`, error);
-                    showToast('Connection error - retrying...', 'danger');
-                };
-                
-                notificationWs.onclose = () => {
-                    updateWSStatus(false);
-                    console.log(`❌ [Driver #${DRIVER_ID}] Disconnected from notification system`);
-                    // Auto-reconnect if still online
-                    if (onlineToggle.checked) {
-                        setTimeout(() => {
-                            console.log(`🔄 [Driver #${DRIVER_ID}] Reconnecting...`);
-                            connectNotificationWebSocket();
-                        }, 3000);
-                    }
-                };
-            }
-            
-            function disconnectNotificationWebSocket() {
-                if (notificationWs) {
-                    notificationWs.close();
-                    notificationWs = null;
-                }
-                clearRideOffer();
-            }
-            
-            // Display ride offer with countdown timer
-            function displayRideOffer(ride) {
-                console.log(`🎯 [Driver #${DRIVER_ID}] Displaying ride offer for Ride #${ride.id}`);
-                console.log(`📦 [Driver #${DRIVER_ID}] Ride object:`, ride);
-                
-                currentOfferId = ride.id;
-                const container = document.getElementById('rideRequests');
-                console.log(`📍 [Driver #${DRIVER_ID}] Container element:`, container);
-                
-                if (!container) {
-                    console.error(`❌ [Driver #${DRIVER_ID}] rideRequests container not found!`);
-                    return;
-                }
-                
-                // FIXED: Use 20 seconds from now (updated from 15 to 20)
-                let secondsRemaining = 20;
-                
-                console.log(`⏰ [Driver #${DRIVER_ID}] Starting 20-second countdown for Ride #${ride.id}`);
-                
-                // Show prominent banner at top
-                const banner = document.getElementById('rideOfferBanner');
-                if (banner) {
-                    banner.style.display = 'block';
-                    banner.innerHTML = `
-                        <div class="container">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h3><i class="fa-solid fa-bell"></i> NEW RIDE OFFER - DRIVER #${DRIVER_ID}!</h3>
-                                    <p class="mb-0">From: ${ride.start_location} → To: ${ride.end_location}</p>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="timer" id="bannerTimer">${secondsRemaining}</div>
-                                    <p class="mb-0 text-center">seconds remaining</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    console.log(`✅ [Driver #${DRIVER_ID}] Banner displayed`);
-                } else {
-                    console.error(`❌ [Driver #${DRIVER_ID}] Banner element not found!`);
-                }
-                
-                // Start title flashing
-                startTitleFlashing();
-                
-                // Show desktop notification
-                showDesktopNotification(
-                    `🚗 New Ride Offer for Driver #${DRIVER_ID}!`,
-                    `From: ${ride.start_location} → To: ${ride.end_location} (${secondsRemaining}s)`
-                );
-                
-                // Play notification sound
-                playNotificationSound();
-                
-                container.innerHTML = `
-                    <div class="card ride-request mb-3 shadow-lg border-success" style="animation: pulse 1s infinite;">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <i class="fa-solid fa-bell fa-2x text-success me-3"></i>
-                                <h4 class="card-title mb-0 text-success">🔔 NEW RIDE OFFER!</h4>
-                            </div>
-                            <div class="alert alert-warning mb-3">
-                                <h5 class="mb-0">⏱️ Time Remaining: <span id="countdown" class="fw-bold">${secondsRemaining}s</span></h5>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <p class="card-text mb-2"><strong>Ride ID:</strong> #${ride.id}</p>
-                                    <p class="card-text mb-2"><strong>📍 From:</strong> ${ride.start_location}</p>
-                                    <p class="card-text mb-2"><strong>📍 To:</strong> ${ride.end_location}</p>
-                                    <p class="card-text mb-2"><strong>👤 Rider:</strong> User #${ride.rider_id}</p>
-                                    <p class="card-text mb-2"><strong>📏 Distance:</strong> ~${(Math.random() * 5 + 1).toFixed(1)} km</p>
-                                </div>
-                                <div class="col-md-4 d-flex flex-column gap-2">
-                                    <button id="acceptBtn_${ride.id}" class="btn btn-success btn-lg w-100" onclick="window.acceptRideOffer(${ride.id}); return false;">
-                                        <i class="fa-solid fa-check"></i> ACCEPT
-                                    </button>
-                                    <button id="declineBtn_${ride.id}" class="btn btn-danger btn-lg w-100" onclick="window.declineRideOffer(${ride.id}); return false;">
-                                        <i class="fa-solid fa-times"></i> DECLINE
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <style>
-                        @keyframes pulse {
-                            0%, 100% { transform: scale(1); }
-                            50% { transform: scale(1.02); }
-                        }
-                    </style>
-                `;
-                
-                // Start countdown timer
-                if (offerTimer) clearInterval(offerTimer);
-                offerTimer = setInterval(() => {
-                    secondsRemaining--;
-                    const countdownEl = document.getElementById('countdown');
-                    const bannerTimerEl = document.getElementById('bannerTimer');
-                    
-                    if (countdownEl) {
-                        countdownEl.textContent = `${secondsRemaining}s`;
-                        if (secondsRemaining <= 5) {
-                            countdownEl.parentElement.classList.remove('alert-warning');
-                            countdownEl.parentElement.classList.add('alert-danger');
-                        }
-                    }
-                    
-                    if (bannerTimerEl) {
-                        bannerTimerEl.textContent = secondsRemaining;
-                    }
-                    
-                    if (secondsRemaining <= 0) {
-                        clearRideOffer();
-                    }
-                }, 1000);
-            }
-            
-            function clearRideOffer() {
-                console.log(`🧹 [Driver #${DRIVER_ID}] === CLEARING RIDE OFFER ===`);
-                
-                // FORCE CLEAR: Stop the current offer
-                currentOfferId = null;
-                console.log('✅ currentOfferId set to null');
-                
-                // FORCE STOP: Clear the countdown timer (CRITICAL!)
-                if (offerTimer) {
-                    console.log('⏱️ Clearing countdown timer...');
-                    clearInterval(offerTimer);
-                    offerTimer = null;
-                    console.log('✅ Countdown timer cleared');
-                } else {
-                    console.log('ℹ️ No countdown timer to clear');
-                }
-                
-                // Hide banner
-                const banner = document.getElementById('rideOfferBanner');
-                if (banner) {
-                    banner.style.display = 'none';
-                    console.log('✅ Banner hidden');
-                }
-                
-                // Stop title flashing
-                stopTitleFlashing();
-                console.log('✅ Title flashing stopped');
-                
-                // Clear the ride requests container
-                const rideRequestsEl = document.getElementById('rideRequests');
-                if (rideRequestsEl) {
-                    rideRequestsEl.innerHTML = '<p class="text-muted">Waiting for ride offers...</p>';
-                    console.log('✅ Ride requests container cleared');
-                }
-                
-                console.log('🎯 === RIDE OFFER FULLY CLEARED ===');
-            }
-            
-            function playNotificationSound() {
-                // Play a beep sound
-                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBziV0fPTgjMGHm7A7N2UTA0PVars5qVUA0lw5N+NTAw=');
-                audio.play().catch(e => console.log('Could not play sound:', e));
-            }
-            
-            // Accept ride offer
-            window.acceptRideOffer = async function acceptRideOffer(rideId) {
-                console.log(`✅ [Driver #${DRIVER_ID}] === ACCEPTING RIDE #${rideId} ===`);
-                console.log('🛑 Step 1: Stopping countdown and clearing UI immediately...');
-                
-                // Disable buttons to prevent double-click
-                const acceptBtn = document.getElementById(`acceptBtn_${rideId}`);
-                const declineBtn = document.getElementById(`declineBtn_${rideId}`);
-                if (acceptBtn) {
-                    acceptBtn.disabled = true;
-                    console.log('🔒 Accept button disabled');
-                }
-                if (declineBtn) {
-                    declineBtn.disabled = true;
-                    console.log('🔒 Decline button disabled');
-                }
-                
-                // FIRST: Stop countdown and clear UI immediately (CRITICAL!)
-                clearRideOffer();
-                
-                try {
-                    const response = await fetch(`${API_URL}/rides/${rideId}/accept`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ driver_id: DRIVER_ID })
-                    });
-                    
-                    console.log('📡 Accept API response status:', response.status);
-                    
-                    if (response.ok) {
-                        const responseData = await response.json();
-                        console.log(`🎉 [Driver #${DRIVER_ID}] Successfully accepted ride #${rideId}`);
-                        console.log('📦 Full response data:', JSON.stringify(responseData, null, 2));
-                        console.log('🚗 Ride object:', responseData.ride);
-                        
-                        showToast(`✅ You have accepted ride #${rideId}!`, 'success');
-                        
-                        // Verify ride data exists
-                        if (!responseData.ride) {
-                            console.error('❌ ERROR: No ride data in response!');
-                            showToast('❌ Error: Invalid response from server', 'danger');
-                            return;
-                        }
-                        
-                        // Show persistent active ride card - extract ride from response
-                        console.log('🎴 Step 2: Calling showActiveRideCard with:', responseData.ride);
-                        showActiveRideCard(responseData.ride);
-                        console.log('🎴 Step 3: showActiveRideCard completed');
-                        
-                        // Force a small delay to ensure DOM updates
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        console.log('⏱️ DOM update delay completed');
-                        
-                        // Mark driver as unavailable
-                        console.log('🔒 Step 4: Marking driver as busy...');
-                        const toggleEl = document.getElementById('onlineToggle');
-                        const statusEl = document.getElementById('statusLabel');
-                        if (toggleEl) toggleEl.checked = false;
-                        if (statusEl) {
-                            statusEl.textContent = 'Busy';
-                            statusEl.classList.remove('status-online');
-                            statusEl.classList.add('status-busy');
-                        }
-                        console.log('✅ Driver status updated to Busy');
-                    } else {
-                        const errorData = await response.json();
-                        console.error(`❌ [Driver #${DRIVER_ID}] Failed to accept ride:`, errorData);
-                        showToast(`❌ Failed to accept ride: ${errorData.detail}`, 'danger');
-                        // Already cleared above
-                    }
-                } catch (error) {
-                    console.error(`❌ [Driver #${DRIVER_ID}] Error accepting ride:`, error);
-                    console.error('Error details:', error.stack);
-                    showToast(`❌ Error accepting ride: ${error.message}`, 'danger');
-                    // Already cleared above
-                }
-            }
-            
-            // Decline ride offer (triggers retry to next driver)
-            window.declineRideOffer = async function declineRideOffer(rideId) {
-                console.log(`❌ [Driver #${DRIVER_ID}] DECLINING ride #${rideId}`);
-                
-                // IMMEDIATE: Clear UI first (don't wait for countdown to hit 0)
-                clearRideOffer();
-                
-                try {
-                    const response = await fetch(`${API_URL}/rides/${rideId}/decline`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ driver_id: DRIVER_ID })
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
-                        console.log(`ℹ️ [Driver #${DRIVER_ID}] Declined ride #${rideId}:`, result);
-                        
-                        // Check if ride was cancelled due to no drivers
-                        if (result.message && result.message.includes('cancelled')) {
-                            showToast('Ride cancelled - no more drivers available', 'warning');
-                        } else {
-                            showToast('Ride offer declined - trying next driver', 'info');
-                        }
-                    } else {
-                        const errorData = await response.json();
-                        console.error(`❌ [Driver #${DRIVER_ID}] Failed to decline:`, errorData);
-                        showToast(`Failed to decline: ${errorData.detail}`, 'danger');
-                    }
-                } catch (error) {
-                    console.error(`❌ [Driver #${DRIVER_ID}] Error declining ride:`, error);
-                    showToast(`Error declining ride: ${error.message}`, 'danger');
-                }
-            }
-            
-            // Show persistent active ride card
-            function showActiveRideCard(ride) {
-                console.log(`🎴 [Driver #${DRIVER_ID}] === showActiveRideCard CALLED ===`);
-                console.log('📦 Ride data received:', ride);
-                
-                if (!ride || !ride.id) {
-                    console.error('❌ ERROR: Invalid ride data passed to showActiveRideCard:', ride);
-                    return;
-                }
-                
-                console.log(`🎴 [Driver #${DRIVER_ID}] Showing active ride card for Ride #${ride.id}`);
-                console.log('📊 Ride status:', ride.status);
-                console.log('📍 Pickup:', ride.start_location);
-                console.log('📍 Dropoff:', ride.end_location);
-                
-                const container = document.getElementById('currentRide');
-                if (!container) {
-                    console.error('❌ ERROR: currentRide container not found in DOM!');
-                    return;
-                }
-                
-                console.log('✅ Container found:', container);
-                
-                // Store current ride globally
-                window.currentActiveRide = ride;
-                console.log('💾 Stored ride globally');
-                
-                // Determine status display
-                let statusBadge = '';
-                let actionButtons = '';
-                
-                if (ride.status === 'accepted') {
-                    statusBadge = '<span class="status-badge accepted">✅ Ride Accepted</span>';
-                    actionButtons = `
-                        <button class="btn btn-warning btn-ride-action me-3" onclick="window.startRide(${ride.id}); return false;">
-                            <i class="fa-solid fa-play"></i> Start Ride
-                        </button>
-                    `;
-                } else if (ride.status === 'in_progress') {
-                    statusBadge = '<span class="status-badge in-progress">🚗 Ride In Progress</span>';
-                    actionButtons = `
-                        <button class="btn btn-success btn-ride-action" onclick="window.completeRide(${ride.id}); return false;">
-                            <i class="fa-solid fa-flag-checkered"></i> Complete Ride
-                        </button>
-                    `;
-                }
-                
-                console.log('🎨 Building HTML for active ride card...');
-                console.log('Status badge:', statusBadge);
-                console.log('Action buttons:', actionButtons);
-                
-                container.innerHTML = `
-                    <div class="active-ride-card">
-                        <h3><i class="fa-solid fa-car"></i> Active Ride #${ride.id}</h3>
-                        ${statusBadge}
-                        
-                        <div class="ride-info">
-                            <p><strong>Pickup:</strong> ${ride.start_location || 'N/A'}</p>
-                            <p><strong>Dropoff:</strong> ${ride.end_location || 'N/A'}</p>
-                            <p><strong>Rider ID:</strong> #${ride.rider_id}</p>
-                            <p><strong>Fare:</strong> $${ride.fare ? ride.fare.toFixed(2) : 'TBD'}</p>
-                            ${ride.created_at ? `<p><strong>Requested:</strong> ${new Date(ride.created_at).toLocaleString()}</p>` : ''}
-                        </div>
-                        
-                        <div class="d-flex justify-content-center mt-3">
-                            ${actionButtons}
-                        </div>
-                        
-                        <div class="mt-3 text-center">
-                            <small><i class="fa-solid fa-info-circle"></i> This card will remain visible until ride completion</small>
-                        </div>
-                    </div>
-                `;
-                
-                console.log('✅ Active ride card HTML injected into DOM');
-                console.log('📦 Container now contains:', container.innerHTML.substring(0, 100) + '...');
-            }
-            
-            // Start ride (driver has picked up passenger)
-            window.startRide = async function startRide(rideId) {
-                console.log(`🚗 [Driver #${DRIVER_ID}] Starting ride #${rideId}`);
-                
-                try {
-                    const response = await fetch(`${API_URL}/rides/${rideId}/start`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ driver_id: DRIVER_ID })
-                    });
-                    
-                    if (response.ok) {
-                        const rideData = await response.json();
-                        console.log(`✅ [Driver #${DRIVER_ID}] Ride #${rideId} started`);
-                        console.log('Start ride response:', rideData);
-                        showToast('🚗 Ride started! Heading to destination...', 'success');
-                        
-                        // The start endpoint returns a plain ride object
-                        showActiveRideCard(rideData);
-                    } else {
-                        const errorData = await response.json();
-                        console.error(`❌ Failed to start ride:`, errorData);
-                        showToast(`Failed to start ride: ${errorData.detail}`, 'danger');
-                    }
-                } catch (error) {
-                    console.error(`❌ Error starting ride:`, error);
-                    showToast(`Error starting ride: ${error.message}`, 'danger');
-                }
-            }
-            
-            // Complete ride (passenger has been dropped off)
-            window.completeRide = async function completeRide(rideId) {
-                console.log(`🏁 [Driver #${DRIVER_ID}] Completing ride #${rideId}`);
-                
-                // Calculate fare (simple: $10 base + $2 per minute estimated)
-                const fare = window.currentActiveRide?.fare || 25.00;
-                
-                try {
-                    const response = await fetch(`${API_URL}/rides/${rideId}/complete?fare=${fare}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ driver_id: DRIVER_ID })
-                    });
-                    
-                    if (response.ok) {
-                        const rideData = await response.json();
-                        console.log(`✅ [Driver #${DRIVER_ID}] Ride #${rideId} completed`);
-                        console.log('Complete ride response:', rideData);
-                        showToast(`🎉 Ride completed! You earned $${fare.toFixed(2)}`, 'success');
-                        
-                        // Clear active ride card
-                        const container = document.getElementById('currentRide');
-                        if (container) {
-                            container.innerHTML = `
-                                <div class="card">
-                                    <div class="card-body">
-                                        <p class="text-muted">No active ride</p>
-                                        <p class="text-success"><i class="fa-solid fa-check-circle"></i> Last ride completed successfully!</p>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                        
-                        // Set driver back online
-                        console.log('🔓 Setting driver back online...');
-                        const toggleEl = document.getElementById('onlineToggle');
-                        const statusEl = document.getElementById('statusLabel');
-                        
-                        if (toggleEl) {
-                            toggleEl.checked = true;
-                            console.log('✅ Toggle set to online');
-                        }
-                        
-                        if (statusEl) {
-                            statusEl.textContent = 'Online';
-                            statusEl.classList.remove('status-busy');
-                            statusEl.classList.add('status-online');
-                            console.log('✅ Status label updated to Online');
-                        }
-                        
-                        // Clear global ride data
-                        window.currentActiveRide = null;
-                        console.log('✅ Global ride data cleared');
-                        
-                        // Update driver availability on backend
-                        console.log('📡 Updating driver availability on backend...');
-                        try {
-                            await fetch(`${API_URL}/users/${DRIVER_ID}/availability`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ available: true })
-                            });
-                            console.log('✅ Driver availability updated on backend');
-                        } catch (err) {
-                            console.error('⚠️ Failed to update availability:', err);
-                        }
-                        
-                        console.log('🎉 Driver is now available for new rides!');
-                    } else {
-                        const errorData = await response.json();
-                        console.error(`❌ Failed to complete ride:`, errorData);
-                        showToast(`Failed to complete ride: ${errorData.detail}`, 'danger');
-                    }
-                } catch (error) {
-                    console.error(`❌ Error completing ride:`, error);
-                    showToast(`Error completing ride: ${error.message}`, 'danger');
-                }
-            }
-            
-            // Update current ride display
-            function updateCurrentRide(ride) {
-                // WebSocket live location sharing
-                if (ws) { ws.close(); ws = null; }
-                if (ride && ride.id) {
-                    currentRideId = ride.id;
-                    ws = new WebSocket(`ws://localhost:8000/ws/ride/${ride.id}/driver`);
-                    ws.onopen = function() {
-                        // Send location every 3 seconds
-                        ws.send(JSON.stringify({ latitude: driverLatLng ? driverLatLng[0] : null, longitude: driverLatLng ? driverLatLng[1] : null }));
-                        window.driverLocationInterval = setInterval(() => {
-                            if (navigator.geolocation) {
-                                navigator.geolocation.getCurrentPosition(function(position) {
-                                    driverLatLng = [position.coords.latitude, position.coords.longitude];
-                                    ws.send(JSON.stringify({ latitude: driverLatLng[0], longitude: driverLatLng[1] }));
-                                    // Animate marker on driver map
-                                    if (driverMarker) {
-                                        driverMarker.setLatLng(driverLatLng);
-                                    } else {
-                                        driverMarker = L.marker(driverLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Your Location').openPopup();
-                                    }
-                                });
-                            }
-                        }, 3000);
-                    };
-                } else {
-                    if (window.driverLocationInterval) clearInterval(window.driverLocationInterval);
-                    if (ws) { ws.close(); ws = null; }
-                }
-                const container = document.getElementById('currentRide');
-                if (!ride) {
-                    container.innerHTML = `
-                        <div class="card-body">
-                            <p class="text-muted">No active ride</p>
-                        </div>
-                    `;
-                    // Remove pins from map
-                    if (pickupMarker) map.removeLayer(pickupMarker);
-                    if (destMarker) map.removeLayer(destMarker);
-                    return;
-                }
-                container.innerHTML = `
-                    <div class="card-body">
-                        <h5 class="card-title">Current Ride #${ride.id}</h5>
-                        <div class="row">
-                            <div class="col-md-7">
-                                <p class="card-text"><strong>From:</strong> ${ride.start_location}</p>
-                                <p class="card-text"><strong>To:</strong> ${ride.end_location}</p>
-                                <p class="card-text"><strong>Rider:</strong> ${ride.rider ? ride.rider.username : 'User #'+ride.rider_id}</p>
-                                ${ride.rider ? `
-                                <p class="card-text"><strong>Rider Rating:</strong> ${ride.rider.rating || 'N/A'}</p>
-                                <p class="card-text"><strong>Rider Location:</strong> ${ride.rider.latitude && ride.rider.longitude ? `${ride.rider.latitude.toFixed(5)}, ${ride.rider.longitude.toFixed(5)}` : 'Not available'}</p>
-                                ` : ''}
-                                <p class="card-text"><strong>Status:</strong> <span class="badge bg-info">${ride.status}</span></p>
-                            </div>
-                            <div class="col-md-5 text-end">
-                                <button class="btn btn-primary" id="completeRideBtn">Complete Ride</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                // Add pickup and destination pins to map
-                if (pickupMarker) map.removeLayer(pickupMarker);
-                if (destMarker) map.removeLayer(destMarker);
-                if (routeLine) map.removeLayer(routeLine);
-                if (ride.start_lat && ride.start_lng) {
-                    pickupLatLng = [ride.start_lat, ride.start_lng];
-                    pickupMarker = L.marker(pickupLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Pickup Location').openPopup();
-                }
-                if (ride.end_lat && ride.end_lng) {
-                    destLatLng = [ride.end_lat, ride.end_lng];
-                    destMarker = L.marker(destLatLng, {icon: L.icon({iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', iconSize: [25, 41], iconAnchor: [12, 41]})}).addTo(map).bindPopup('Destination').openPopup();
-                }
-                // Draw route polyline
-                if (pickupLatLng && destLatLng) {
-                    routeLine = L.polyline([pickupLatLng, destLatLng], {color: 'purple', weight: 5, opacity: 0.7, dashArray: '10,10'}).addTo(map);
-                    map.fitBounds([pickupLatLng, destLatLng]);
-                } else if (pickupLatLng) {
-                    map.setView(pickupLatLng, 15);
-                } else if (destLatLng) {
-                    map.setView(destLatLng, 15);
-                }
-                // Add complete ride handler
-                document.getElementById('completeRideBtn').addEventListener('click', () => completeRide(ride.id));
-            }
-            
-            // Complete a ride
-            async function completeRide(rideId) {
-                // Calculate a random fare between $10 and $50
-                const fare = (Math.random() * 40 + 10).toFixed(2);
-                
-                try {
-                    const response = await fetch(`${API_URL}/rides/${rideId}/complete`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ fare: parseFloat(fare) })
-                    });
-                    if (response.ok) {
-                        showToast(`Ride #${rideId} completed! Fare: $${fare}`, 'success');
-                        updateCurrentRide(null); // Clear current ride
-                    } else {
-                        const errorText = await response.text();
-                        showToast(`Failed to complete ride: ${errorText}`, 'danger');
-                    }
-                } catch (error) {
-                    console.error('Error completing ride:', error);
-                    showToast(`Error completing ride: ${error.message}`, 'danger');
-                }
-            }
-            
-            // Check for current active ride on page load
-            async function checkActiveRide() {
-                try {
-                    const response = await fetch(`${API_URL}/rides?driver_id=${DRIVER_ID}&status=accepted`);
-                    
-                    if (response.ok) {
-                        const rides = await response.json();
-                        if (rides.length > 0) {
-                            updateCurrentRide(rides[0]);
-                        } else {
-                            updateCurrentRide(null);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error checking active ride:', error);
-                }
-            }
-            
-            // Initialize on page load
-            checkActiveRide();
-            
-            // Auto-connect to WebSocket if driver starts online
-            if (onlineToggle.checked) {
-                connectNotificationWebSocket();
-            }
-            
-            // Initial load
-            if (onlineToggle.checked) {
-                startPolling();
-            }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        // Online toggle
+        document.getElementById('onlineToggle').addEventListener('change', function() {
+            const label = document.getElementById('statusLabel');
+            label.textContent = this.checked ? 'Online' : 'Offline';
         });
+
+        // Initialize
+        checkAuth();
     </script>
 </body>
 </html>

@@ -10,6 +10,10 @@ load_dotenv()
 # Use the correct environment variable name
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Fix for Render: Replace postgres:// with postgresql://
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
 
