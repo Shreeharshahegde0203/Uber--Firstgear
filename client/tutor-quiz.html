@@ -77,13 +77,20 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .quiz-footer { margin-top: 40px; display: flex; justify-content: flex-end; }
+        .quiz-footer { margin-top: 40px; display: flex; justify-content: flex-end; gap: 16px; }
+        .submit-btn { 
+            background: #3b82f6; color: #fff; border: none; padding: 16px 40px; border-radius: 10px; 
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .submit-btn:hover:not(:disabled) { background: #2563eb; }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .next-btn { 
             background: #fff; color: #000; border: none; padding: 16px 40px; border-radius: 10px; 
             font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
         }
         .next-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .next-btn:hover:not(:disabled) { opacity: 0.9; }
+        .btn-hidden { display: none !important; }
 
         /* Result State */
         .result-container { text-align: center; padding: 40px 0; display: none; animation: fadeUp 0.5s ease; }
@@ -167,7 +174,8 @@
             </div>
 
             <div class="quiz-footer">
-                <button class="next-btn" id="nextBtn" disabled>Next Question</button>
+                <button class="submit-btn" id="submitBtn" disabled>Submit Answer</button>
+                <button class="next-btn btn-hidden" id="nextBtn">Next Question</button>
             </div>
         </div>
 
@@ -209,6 +217,7 @@
         let currentQuestionIndex = 0;
         let userAnswers = [];
         let answerChecked = false;
+        let selectedAnswer = -1;
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!currentUser) {
@@ -264,6 +273,7 @@
             q.options.forEach((opt, idx) => {
                 const btn = document.createElement('div');
                 btn.className = 'option-btn';
+                btn.setAttribute('data-index', idx);
                 btn.innerHTML = `
                     <div class="option-marker"></div>
                     <span>${opt}</span>
@@ -272,41 +282,63 @@
                 grid.appendChild(btn);
             });
 
-            // Reset state
+            // Reset state for new question
             answerChecked = false;
+            selectedAnswer = -1;
             document.getElementById('explanationBox').classList.remove('show');
-            document.getElementById('nextBtn').disabled = true;
+            
+            // Show submit button, hide next button
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').classList.remove('btn-hidden');
+            document.getElementById('submitBtn').textContent = 'Submit Answer';
+            document.getElementById('nextBtn').classList.add('btn-hidden');
+            
+            // Update next button text for last question
             document.getElementById('nextBtn').textContent = 
-                currentQuestionIndex === currentQuestions.length - 1 ? 'Submit Quiz' : 'Next Question';
+                currentQuestionIndex === currentQuestions.length - 1 ? 'Finish Quiz' : 'Next Question';
         }
 
-        async function selectOption(idx) {
-            if (answerChecked) return; // Already answered
+        function selectOption(idx) {
+            if (answerChecked) return; // Already submitted
             
             const buttons = document.querySelectorAll('.option-btn');
             buttons.forEach(b => b.classList.remove('selected'));
             buttons[idx].classList.add('selected');
             
-            // Store answer
-            userAnswers[currentQuestionIndex] = idx;
-            
-            // Check answer and get explanation
-            await checkAnswer(idx);
+            selectedAnswer = idx;
+            document.getElementById('submitBtn').disabled = false;
         }
+
+        // Submit Answer Button
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            if (selectedAnswer === -1 || answerChecked) return;
+            
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Checking...';
+            
+            await checkAnswer(selectedAnswer);
+        });
         
         async function checkAnswer(selectedIdx) {
             const q = currentQuestions[currentQuestionIndex];
+            
+            // Store the answer
+            userAnswers[currentQuestionIndex] = selectedIdx;
             
             try {
                 const res = await fetch(`${API_URL}/api/quiz/check-answer`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        question_id: q.id,
                         user_id: currentUser.id,
-                        selected_answer: selectedIdx
+                        question_id: q.id,
+                        answer_index: selectedIdx
                     })
                 });
+                
+                if (!res.ok) {
+                    throw new Error('Failed to check answer');
+                }
                 
                 const data = await res.json();
                 const buttons = document.querySelectorAll('.option-btn');
@@ -315,30 +347,36 @@
                 buttons.forEach(b => b.classList.add('locked'));
                 
                 // Show correct/incorrect styling
-                if (data.is_correct) {
+                if (data.correct) {
                     buttons[selectedIdx].classList.remove('selected');
                     buttons[selectedIdx].classList.add('correct');
                 } else {
                     buttons[selectedIdx].classList.remove('selected');
                     buttons[selectedIdx].classList.add('incorrect');
-                    // Show the correct answer
-                    buttons[data.correct_answer].classList.add('correct');
+                    // Show the correct answer highlighted
+                    if (data.correct_answer >= 0 && data.correct_answer < buttons.length) {
+                        buttons[data.correct_answer].classList.add('correct');
+                    }
                 }
                 
                 // Show explanation
                 document.getElementById('explanationText').textContent = data.explanation;
                 document.getElementById('explanationBox').classList.add('show');
                 
+                // Hide submit button, show next button
                 answerChecked = true;
-                document.getElementById('nextBtn').disabled = false;
+                document.getElementById('submitBtn').classList.add('btn-hidden');
+                document.getElementById('nextBtn').classList.remove('btn-hidden');
                 
             } catch (e) {
                 console.error('Error checking answer', e);
-                // Still allow to proceed
-                document.getElementById('nextBtn').disabled = false;
+                document.getElementById('submitBtn').textContent = 'Submit Answer';
+                document.getElementById('submitBtn').disabled = false;
+                alert('Error checking answer. Please try again.');
             }
         }
 
+        // Next Question Button
         document.getElementById('nextBtn').addEventListener('click', async () => {
             if (currentQuestionIndex < currentQuestions.length - 1) {
                 currentQuestionIndex++;
@@ -351,7 +389,7 @@
         async function submitQuiz() {
             document.getElementById('quizContainer').style.display = 'none';
             document.getElementById('loadingState').style.display = 'block';
-            document.getElementById('loadingState').textContent = 'Submitting results...';
+            document.getElementById('loadingState').textContent = 'Calculating your results...';
 
             try {
                 const res = await fetch(`${API_URL}/api/quiz/submit`, {
@@ -377,6 +415,8 @@
                 }
             } catch (e) {
                 alert('Error submitting quiz');
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('quizContainer').style.display = 'flex';
             }
         }
     </script>

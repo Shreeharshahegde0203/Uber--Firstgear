@@ -42,97 +42,127 @@ class AnswerResult(BaseModel):
     correct_answer: int
     explanation: str
 
-# Mock Question Bank with explanations
+# Comprehensive Question Bank with detailed explanations
 QUESTION_BANK = [
     {
-        "q": "What should you do when approaching a yellow traffic light?",
-        "options": ["Speed up to cross", "Stop if it can be done safely", "Honk and proceed", "Ignore it"],
+        "q": "You're driving at 60 km/h and see a yellow traffic light. What should you do?",
+        "options": ["Accelerate to cross quickly", "Stop safely if possible", "Honk and continue", "Flash your headlights"],
         "correct": 1,
-        "explanation": "A yellow light means the signal is about to turn red. You should stop if you can do so safely. Speeding up is dangerous and illegal in most jurisdictions."
+        "explanation": "✅ Correct Answer: Stop safely if possible.\n\nA yellow light warns that the signal is about to turn red. If you can stop safely before the intersection, you must do so. Accelerating through a yellow light is dangerous and can result in running a red light."
     },
     {
-        "q": "What is the safe following distance under normal driving conditions?",
-        "options": ["1 second", "2 seconds", "3 seconds", "5 seconds"],
+        "q": "What is the '3-second rule' in driving?",
+        "options": ["Time to check mirrors", "Safe following distance from the vehicle ahead", "Maximum time at a stop sign", "Time to complete a lane change"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Safe following distance from the vehicle ahead.\n\nThe 3-second rule helps maintain a safe gap. Pick a fixed point, and when the car ahead passes it, count '1-2-3'. You should reach that point only after finishing the count. In rain or fog, increase to 5-6 seconds."
+    },
+    {
+        "q": "You're parking uphill next to a curb. Which way should your front wheels point?",
+        "options": ["Toward the curb", "Away from the curb", "Straight ahead", "Depends on traffic"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Away from the curb.\n\nWhen parking uphill WITH a curb, turn wheels AWAY from the curb. If brakes fail, the car rolls backward and the wheels hit the curb, stopping the car. This prevents your vehicle from rolling into traffic."
+    },
+    {
+        "q": "A pedestrian is crossing at a zebra crossing. What must you do?",
+        "options": ["Honk to alert them", "Slow down and proceed carefully", "Stop completely and wait", "Flash headlights"],
         "correct": 2,
-        "explanation": "The 3-second rule provides adequate reaction time and braking distance. In poor conditions (rain, fog), increase to 4-6 seconds."
+        "explanation": "✅ Correct Answer: Stop completely and wait.\n\nPedestrians have absolute right of way at zebra crossings. You must come to a complete stop and wait until they have completely crossed. Never honk at pedestrians on a crossing."
     },
     {
-        "q": "When parking uphill with a curb, which way should you turn your wheels?",
-        "options": ["Towards the curb", "Away from the curb", "Straight ahead", "It doesn't matter"],
+        "q": "What does a flashing red traffic signal mean?",
+        "options": ["Slow down and proceed", "Stop, then go when safe", "Traffic light is broken", "Emergency vehicles approaching"],
         "correct": 1,
-        "explanation": "Turn wheels away from curb when parking uphill. If brakes fail, the car will roll back into the curb, preventing it from rolling into traffic."
+        "explanation": "✅ Correct Answer: Stop, then go when safe.\n\nA flashing red light works exactly like a STOP sign. You must come to a complete stop, check all directions for traffic and pedestrians, and proceed only when it's safe to do so."
     },
     {
-        "q": "What does a flashing red traffic light mean?",
-        "options": ["Stop and proceed when safe", "Slow down", "Yield to oncoming traffic", "Do not enter"],
-        "correct": 0,
-        "explanation": "A flashing red light is treated like a stop sign. Come to a complete stop, check for traffic, and proceed when safe."
-    },
-    {
-        "q": "Who has the right of way at a 4-way stop?",
-        "options": ["The biggest vehicle", "The vehicle that arrived first", "The vehicle on the left", "The faster vehicle"],
-        "correct": 1,
-        "explanation": "At a 4-way stop, the first vehicle to arrive has the right of way. If two vehicles arrive simultaneously, the one on the right goes first."
-    },
-    {
-        "q": "What is the purpose of an ABS (Anti-lock Braking System)?",
-        "options": ["To stop faster", "To prevent wheels from locking during braking", "To make the car go faster", "To save fuel"],
-        "correct": 1,
-        "explanation": "ABS prevents wheel lock-up during hard braking, allowing you to maintain steering control. It pulses the brakes automatically to prevent skidding."
-    },
-    {
-        "q": "When is it legal to pass a vehicle on the right?",
-        "options": ["When the vehicle ahead is turning left", "On a one-way street", "When there are two or more lanes in your direction", "All of the above"],
-        "correct": 3,
-        "explanation": "Passing on the right is legal in all these situations. However, always ensure it's safe and check blind spots before changing lanes."
-    },
-    {
-        "q": "What should you do if your vehicle starts to hydroplane?",
-        "options": ["Brake hard", "Steer sharply", "Ease off the accelerator", "Accelerate"],
+        "q": "Two cars arrive at a 4-way stop at the same time. Who goes first?",
+        "options": ["The larger vehicle", "The vehicle on the left", "The vehicle on the right", "The one who honks first"],
         "correct": 2,
-        "explanation": "When hydroplaning, ease off the gas and steer gently in the direction you want to go. Avoid sudden braking or steering which can cause loss of control."
+        "explanation": "✅ Correct Answer: The vehicle on the right.\n\nWhen two vehicles arrive simultaneously at a 4-way stop, the vehicle on the RIGHT has the right of way. This is called the 'right-hand rule'. If facing each other, the one going straight goes before the one turning."
     },
     {
-        "q": "What is the meaning of a solid white line on the road?",
-        "options": ["Lane changing is allowed", "Lane changing is discouraged/prohibited", "Stop line", "Parking line"],
-        "correct": 1,
-        "explanation": "Solid white lines indicate lane changing is discouraged or prohibited. They're often used near intersections or in areas where lane changes could be dangerous."
-    },
-    {
-        "q": "When should you use your high beam headlights?",
-        "options": ["In fog", "In heavy rain", "On open country roads with no oncoming traffic", "When following another vehicle"],
+        "q": "Your car starts skidding on a wet road. What should you do?",
+        "options": ["Brake hard immediately", "Turn the steering wheel sharply", "Ease off the accelerator gently", "Accelerate to regain control"],
         "correct": 2,
-        "explanation": "High beams provide better visibility on dark roads but should only be used when no other vehicles are ahead. Switch to low beams within 150m of oncoming traffic."
+        "explanation": "✅ Correct Answer: Ease off the accelerator gently.\n\nWhen skidding (hydroplaning), don't panic! Gently release the accelerator, don't brake suddenly, and steer smoothly in the direction you want to go. Sudden movements can cause you to lose complete control."
     },
     {
-        "q": "What is the maximum speed limit in residential areas in India?",
-        "options": ["20 km/h", "25 km/h", "30 km/h", "40 km/h"],
+        "q": "What is the blind spot of a vehicle?",
+        "options": ["Area visible in rearview mirror", "Area not visible in any mirror", "Front of the vehicle", "Dashboard area"],
         "correct": 1,
-        "explanation": "In India, the speed limit in residential areas is typically 25 km/h to ensure pedestrian safety, especially near schools and hospitals."
+        "explanation": "✅ Correct Answer: Area not visible in any mirror.\n\nBlind spots are areas around your vehicle that you cannot see in your mirrors. They're typically on both sides, slightly behind you. Always turn your head to check blind spots before changing lanes or merging."
     },
     {
-        "q": "What does a broken yellow center line mean?",
-        "options": ["No passing allowed", "Passing allowed when safe", "Road under construction", "One-way road"],
+        "q": "When should you use your vehicle's horn?",
+        "options": ["To greet friends", "To warn others of danger", "To express frustration in traffic", "At traffic signals"],
         "correct": 1,
-        "explanation": "A broken yellow center line indicates passing is allowed when safe. Ensure the road ahead is clear for a safe distance before overtaking."
+        "explanation": "✅ Correct Answer: To warn others of danger.\n\nThe horn should only be used to alert other road users of potential danger, like warning a pedestrian who hasn't seen you. Using horns unnecessarily causes noise pollution and is illegal in many areas."
     },
     {
-        "q": "What should you check before changing lanes?",
-        "options": ["Only mirrors", "Only blind spot", "Mirrors, blind spot, and signal", "Nothing if road is empty"],
+        "q": "What does ABS (Anti-lock Braking System) do?",
+        "options": ["Makes the car stop faster", "Prevents wheels from locking during hard braking", "Automatically applies brakes", "Reduces fuel consumption"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Prevents wheels from locking during hard braking.\n\nABS rapidly pumps the brakes (many times per second) during emergency braking to prevent wheel lock-up. This allows you to maintain steering control while braking hard. You'll feel a pulsing in the brake pedal - this is normal!"
+    },
+    {
+        "q": "You see a school bus with flashing red lights stopped ahead. What must you do?",
+        "options": ["Slow down and pass carefully", "Stop and wait until lights stop flashing", "Honk and proceed", "Change lanes and overtake"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Stop and wait until lights stop flashing.\n\nWhen a school bus displays flashing red lights, children are getting on or off. ALL traffic in BOTH directions must stop and wait. Proceed only after the lights stop flashing and the bus starts moving."
+    },
+    {
+        "q": "What's the correct order for starting a parked car with manual transmission?",
+        "options": ["Start engine, release handbrake, press clutch", "Press clutch, start engine, release handbrake", "Release handbrake, press clutch, start engine", "Press brake, start engine, release clutch"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Press clutch, start engine, release handbrake.\n\nFor manual cars: 1) Ensure gear is in neutral, 2) Press clutch fully, 3) Start engine, 4) Press brake, 5) Release handbrake, 6) Select gear. This sequence prevents the car from lurching forward unexpectedly."
+    },
+    {
+        "q": "What should you do before opening your car door when parked on a road?",
+        "options": ["Open quickly to save time", "Check mirrors and look behind for traffic", "Honk your horn first", "Turn on hazard lights"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Check mirrors and look behind for traffic.\n\nUse the 'Dutch Reach' technique: Open the door with your far hand (right hand for driver's door). This forces you to turn your body and naturally look back for cyclists, motorcycles, or other vehicles approaching."
+    },
+    {
+        "q": "At night, when should you switch from high beam to low beam headlights?",
+        "options": ["When entering a city", "When another vehicle approaches from opposite direction", "Never switch while driving", "Only at traffic signals"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: When another vehicle approaches from opposite direction.\n\nHigh beams can blind oncoming drivers. Switch to low beam when: 1) A vehicle approaches within 200m, 2) Following another vehicle within 200m, 3) In well-lit areas, 4) In fog or heavy rain (high beams reflect back)."
+    },
+    {
+        "q": "What does a solid white line between lanes mean?",
+        "options": ["You can change lanes freely", "Lane changing is discouraged", "Only right turns allowed", "Road is ending"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Lane changing is discouraged.\n\nA solid white line means you should stay in your lane. It's used in areas where changing lanes could be dangerous, like near intersections or in merging zones. A broken white line means lane changing is permitted when safe."
+    },
+    {
+        "q": "Your car's engine temperature gauge shows it's overheating. What should you do?",
+        "options": ["Stop immediately and open the hood", "Turn on the heater and pull over safely", "Pour cold water on the engine", "Ignore it and continue driving"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Turn on the heater and pull over safely.\n\nTurning on the heater draws heat away from the engine. Pull over safely, turn off the AC, and let the engine cool for 15-20 minutes. NEVER open the radiator cap when hot - pressurized steam can cause severe burns!"
+    },
+    {
+        "q": "What's the safest hand position on the steering wheel?",
+        "options": ["12 o'clock position (top)", "10 and 2 o'clock", "9 and 3 o'clock", "Bottom of the wheel"],
         "correct": 2,
-        "explanation": "Always check mirrors, look over your shoulder for blind spots, and signal before changing lanes. This 'Mirror-Signal-Maneuver' routine prevents accidents."
+        "explanation": "✅ Correct Answer: 9 and 3 o'clock.\n\nThe modern recommended position is 9 and 3 (or slightly lower at 8 and 4). This provides best control, keeps your arms away from the airbag deployment zone, and reduces fatigue on long drives. The old 10-2 position can cause arm injuries if airbags deploy."
     },
     {
-        "q": "When should you use hazard lights?",
-        "options": ["When parking illegally", "When driving slowly", "When your vehicle is stationary and causing an obstruction", "When overtaking"],
-        "correct": 2,
-        "explanation": "Hazard lights should only be used when your vehicle is stationary and may be a hazard to other road users, like during a breakdown."
-    },
-    {
-        "q": "What is the correct hand signal for a right turn?",
-        "options": ["Arm extended straight out", "Arm extended upward at 90°", "Arm extended downward at 90°", "Circular motion"],
+        "q": "You approach a roundabout. Who has the right of way?",
+        "options": ["Vehicles entering the roundabout", "Vehicles already in the roundabout", "Larger vehicles", "Vehicles from the right"],
         "correct": 1,
-        "explanation": "For a right turn, extend your left arm out and bend it upward at 90° (forming an 'L' shape). This is visible to drivers behind you."
+        "explanation": "✅ Correct Answer: Vehicles already in the roundabout.\n\nAlways yield to traffic already circulating inside the roundabout. Wait for a safe gap, then enter. Signal left when you're about to exit. In India, traffic moves clockwise in roundabouts."
+    },
+    {
+        "q": "What should you do if an ambulance with sirens approaches from behind?",
+        "options": ["Speed up to get out of the way", "Stop immediately wherever you are", "Pull over to the left and stop", "Continue at the same speed"],
+        "correct": 2,
+        "explanation": "✅ Correct Answer: Pull over to the left and stop.\n\nSafely move to the left side of the road and stop to let the ambulance pass. Don't stop in the middle of the road or at intersections. Check your mirrors before moving, and resume driving only after the ambulance has passed."
+    },
+    {
+        "q": "What's the main purpose of a catalytic converter in your car?",
+        "options": ["Improves fuel efficiency", "Reduces harmful exhaust emissions", "Makes the engine quieter", "Increases horsepower"],
+        "correct": 1,
+        "explanation": "✅ Correct Answer: Reduces harmful exhaust emissions.\n\nThe catalytic converter transforms harmful gases (carbon monoxide, hydrocarbons, nitrogen oxides) into less harmful substances (carbon dioxide, water, nitrogen). It's a crucial part of your car's emission control system and required by law."
     }
 ]
 
